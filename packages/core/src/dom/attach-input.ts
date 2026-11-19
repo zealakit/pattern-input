@@ -252,9 +252,14 @@ export function attachInput<
   on(el, "blur", onBlur);
   on(document, "selectionchange", onSelectionChange);
 
+  // Repaint whenever the controller changes outside this handler too — most
+  // importantly when a controlled consumer approves a proposal via setOptions.
+  const unsubscribe = controller.subscribe(render);
+
   render();
 
   return () => {
+    unsubscribe();
     for (const listener of listeners) {
       listener.target.removeEventListener(listener.type, listener.handler);
     }

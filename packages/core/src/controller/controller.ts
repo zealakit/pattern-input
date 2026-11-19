@@ -63,7 +63,10 @@ export type FieldController<TState, TEvent, TValue, TOptions> = {
   readonly controlled: boolean;
 };
 
-export type PatternInputErrorCode = "CONTROLLED_WITHOUT_HANDLER";
+export type PatternInputErrorCode =
+  | "CONTROLLED_WITHOUT_HANDLER"
+  | "UNSUPPORTED_ELEMENT"
+  | "NO_DOM";
 
 export class PatternInputError extends Error {
   readonly code: PatternInputErrorCode;

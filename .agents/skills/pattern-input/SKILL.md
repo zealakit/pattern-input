@@ -90,6 +90,24 @@ string.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
+## Vanilla adapter (filled by plan 08)
+
+`@zealakit/pattern-input-vanilla` is the reference adapter: a thin layer over the controller and
+the DOM binding, with no element creation.
+
+- `createNumberInput(el, options?)`, `createMaskedInput(el, options)`,
+  `createOtpInput(group, options)` attach to host-owned elements. The input must be a
+  `<input>` of type text/tel/search (default type qualifies), else `PatternInputError`
+  `UNSUPPORTED_ELEMENT`. Without a DOM they throw `NO_DOM`.
+- Instances expose the contract names: `getInputProps()` (number/masked) or
+  `getGroupProps()`/`getSlotProps(i)`/`getHiddenInputProps()` (OTP), plus
+  `value`, `formattedValue`, `status`, `setValue`, `clear`, `focus`, `undo`, `redo`,
+  `setOptions`, `subscribe`, `destroy` (OTP adds `refresh`). `setOptions` is how a controlled
+  consumer approves a proposal.
+- `applyProps` diffs getter attributes only; attributes the host set are restored on `destroy`,
+  and adapter-added ones are removed. No class or style is ever written.
+- `destroy()` detaches the DOM binding, destroys the controller, and restores attributes.
+
 ## Controller and modes (filled by plan 06)
 
 - `createNumberController`, `createMaskedController`, `createOtpController` (or
@@ -270,7 +288,7 @@ selection; framework adapters never bind `value` reactively.
 | 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | done |
-| 08–11 | vanilla / React / Vue / Svelte adapters | filled by plans 08–11 |
+| 08–11 | vanilla / React / Vue / Svelte adapters | 08 done; 09–11 pending |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
 | 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |
 
