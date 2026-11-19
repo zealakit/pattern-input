@@ -1,0 +1,67 @@
+{
+  "name": "@zealakit/pattern-input-vanilla",
+  "version": "1.0.0-beta.1",
+  "description": "Headless, framework-agnostic behavioral primitives for number, masked, and one-time-code input fields in vanilla JavaScript and TypeScript.",
+  "keywords": [
+    "number-input",
+    "masked-input",
+    "otp",
+    "headless",
+    "zealakit",
+    "vanilla",
+    "javascript",
+    "typescript",
+    "dom",
+    "a11y"
+  ],
+  "author": "nqhed - Huy Ed. Nguyen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zealakit/pattern-input.git",
+    "directory": "packages/vanilla"
+  },
+  "homepage": "https://github.com/zealakit/pattern-input#readme",
+  "bugs": {
+    "url": "https://github.com/zealakit/pattern-input/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@zealakit/pattern-input-core": "workspace:^"
+  },
+  "devDependencies": {
+    "happy-dom": "^21.0.4"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
+    "test": "pnpm build && node --import ./tests/setup.ts --test tests/*.test.ts",
+    "test:watch": "node --import ./tests/setup.ts --test --watch tests/*.test.ts",
+    "clean": "rm -rf dist",
+    "prepack": "pnpm run build"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  }
+}

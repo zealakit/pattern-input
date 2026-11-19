@@ -1,0 +1,25 @@
+{
+  "name": "@zealakit/pattern-input-nextjs-example",
+  "version": "1.0.0-beta.1",
+  "private": true,
+  "description": "Next.js App Router SSR/hydration smoke test for @zealakit/pattern-input-react.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3010",
+    "build": "next build",
+    "start": "next start --port 3010",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zealakit/pattern-input-react": "workspace:*",
+    "next": "^16.4.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "^5.9.3"
+  }
+}
