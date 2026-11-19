@@ -63,6 +63,34 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## Mask grammar (filled by plan 02)
+
+Frozen for v1 — adding a form requires a BRD change:
+
+| Pattern char | Meaning |
+| --- | --- |
+| `9` | digit `[0-9]` |
+| `a` | ASCII letter `[A-Za-z]` |
+| `*` | ASCII letter or digit |
+| custom key | from the `tokens` option: `{ test: RegExp; transform?: "upper" \| "lower" }`, single-character match |
+| `\x` | literal `x` |
+| `[...]` | enclosed slots are optional (the field is complete without them) |
+| `{n}` / `{n,m}` after a token | repeat; `{n,}` is greedy up to the 64-slot cap |
+| anything else | literal |
+
+`compileMask` is the only throwing entry point (`MaskPatternError` with `patternIndex`,
+`offset`, `reason`); it runs once at option resolution. `fitRaw` ignores literals in the raw
+input, rejects at the first character no slot accepts, and reports `rejectedAt` when the raw
+input is longer than the capacity. `selectAlternative` takes the first fully matching pattern
+(FR-21), else the first that still has capacity. `extractRaw` keeps only editable characters,
+which is what makes paste work (FR-15).
+
+The number lexer (`lexNumber`) is explicit-syntax only: group separators are skipped anywhere,
+the decimal separator is accepted once, a sign only at the start (`-`, `−`, or a dropped `+`),
+and ASCII digits only in v1. Ambiguity such as `1,234` vs `1.234` is decided by `syntax`, never
+guessed. All number math runs on canonical decimal strings (`decimal.ts`) so there is no
+binary-float drift; `toNumber` returns `null` beyond `Number.MAX_SAFE_INTEGER`.
+
 ## Caret model (filled by plan 01)
 
 - A selection is `{ anchor, focus }`, each a `StickyAnchor { offset, affinity }` counted in
@@ -119,7 +147,7 @@ selection; framework adapters never bind `value` reactively.
 | --- | --- | --- |
 | 00 | workspace, tooling, empty packages, scripts, agents | done |
 | 01 | core foundations: types, editable map, sticky caret, key normalization | done |
-| 02 | core lexers: mask grammar, number lexer, decimal math | filled by plan 02 |
+| 02 | core lexers: mask grammar, number lexer, decimal math | done |
 | 03 | number field: options, format/parse, reducer, keymap, getters | filled by plan 03 |
 | 04 | masked field | filled by plan 04 |
 | 05 | OTP field | filled by plan 05 |
