@@ -37,7 +37,7 @@ export function formatMasked(
         text += token.char;
         continue;
       }
-      if (cursor === 0) {
+      if (raw === "") {
         break;
       }
       if (cursor < raw.length || trailing) {

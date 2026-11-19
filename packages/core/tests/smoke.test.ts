@@ -60,5 +60,11 @@ test("core dom entry imports without touching the document", async () => {
   const entry = new URL("../dist/dom/index.js", import.meta.url).href;
   const module = await import(entry);
 
-  assert.deepEqual(Object.keys(module), []);
+  assert.deepEqual(Object.keys(module).sort(), [
+    "attachInput",
+    "attachOtpGroup",
+    "isBrowser",
+    "mapInputType",
+    "platform",
+  ]);
 });

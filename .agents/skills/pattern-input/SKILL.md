@@ -63,6 +63,33 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## DOM binding (filled by plan 07)
+
+`@zealakit/pattern-input-core/dom` is the only place DOM events become controller events.
+
+- `attachInput(el, controller, { platform? })` returns a `Detach`. It maps `beforeinput`
+  (`insertText`/`insertReplacementText` → insert, `insertFromPaste`/`insertFromDrop` → paste,
+  `deleteContent*`/`deleteWord*`/`delete*Line*` → deletes, `historyUndo`/`historyRedo` → undo/redo)
+  and calls `preventDefault` only for types it handled. `insertCompositionText` is ignored: the
+  IME owns the DOM. Unknown types fall through.
+- `input` is a fallback for browsers without a cancelable `beforeinput`: diff `el.value` against
+  the last rendered text, derive an insert or deletes, then repaint.
+- Composition: `composeStart`/`composeUpdate`/exactly one `composeEnd`; nothing is formatted or
+  rejected in between (FR-17).
+- `keydown` goes through `controller.handleKey`; handled keys are prevented, Tab and modified keys
+  fall through. `isComposing` and legacy `keyCode 229` are skipped.
+- Paste/copy/cut use `clipboardData` text; copy writes the formatted selection, cut writes it and
+  deletes the selection. Selection changes while focused dispatch `select`, snapping through the
+  editable map (FR-14).
+- After every handled event the binding repaints `el.value` and the selection under an `applying`
+  guard, so its own synthetic events are ignored. Controlled mode always paints the approved
+  state, so a rejected proposal is never shown (AC-7).
+- `attachOtpGroup(group, controller, getSlots, { hiddenInput? })` wires per-slot
+  beforeinput/input/paste/key/focus, keeps roving `tabindex`, moves focus to `activeIndex`, keeps
+  the hidden input in sync, and exposes `refresh()` so adapters can re-query slots after render.
+- SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
+  `isBrowser()` is false.
+
 ## Controller and modes (filled by plan 06)
 
 - `createNumberController`, `createMaskedController`, `createOtpController` (or
@@ -242,7 +269,7 @@ selection; framework adapters never bind `value` reactively.
 | 04 | masked field | done |
 | 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | done |
-| 07 | `./dom` binding | filled by plan 07 |
+| 07 | `./dom` binding | done |
 | 08–11 | vanilla / React / Vue / Svelte adapters | filled by plans 08–11 |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
 | 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |

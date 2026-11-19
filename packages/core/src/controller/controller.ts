@@ -1,4 +1,10 @@
-import type { FieldStatus, KeyInput, KeyPlatform } from "../shared/index.js";
+import type {
+  EditableMap,
+  FieldStatus,
+  KeyInput,
+  KeyPlatform,
+  StickySelection,
+} from "../shared/index.js";
 import type { FieldBinding } from "./binding.js";
 
 export type ChangeReason =
@@ -19,6 +25,13 @@ export type ValueChange<TValue> = {
   readonly reason: ChangeReason;
 };
 
+/** What a DOM binding needs to paint the element. */
+export type FieldView = {
+  readonly text: string;
+  readonly map: EditableMap;
+  readonly selection: StickySelection;
+};
+
 export type FieldControllerOptions<TValue, TOptions> = TOptions & {
   /** Present (even as `null` for number) ⇒ controlled mode. */
   readonly value?: TValue;
@@ -33,6 +46,7 @@ export type FieldControllerOptions<TValue, TOptions> = TOptions & {
 
 export type FieldController<TState, TEvent, TValue, TOptions> = {
   getState(): TState;
+  getView(): FieldView;
   subscribe(listener: () => void): () => void;
   dispatch(event: TEvent): void;
   handleKey(key: KeyInput, platform?: KeyPlatform): boolean;
@@ -383,6 +397,14 @@ export function createFieldController<
 
   return {
     getState: () => approved,
+    getView() {
+      const formatted = binding.format(approved, resolved);
+      return {
+        text: formatted.text,
+        map: formatted.map,
+        selection: binding.selectionOf(approved),
+      };
+    },
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => {
