@@ -63,6 +63,24 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## Masked field (filled by plan 04)
+
+- `MaskedState.rawValue` holds editable characters only; literals are always re-derived by
+  `formatMasked(raw, alternative, resolved, { trailingLiterals })` against the selected
+  alternative.
+- Literal visibility: `"filled"` (default) shows literals up to the last filled slot plus the
+  literal run immediately after it while focused (`123` → `123.`); `"always"` renders the whole
+  mask with `placeholderChar`, and placeholders are not map units.
+- Status: `""` → empty, any required slot unfilled → incomplete (never invalid), all required
+  filled → complete; `invalid` comes only from the consumer `validate` on commit.
+- Insert: typing the next literal is a no-op advance, a mismatching character rejects the whole
+  insert, and at capacity a longer alternative may take the character (first match wins, so the
+  field switches patterns as the raw value grows). Paste extracts editable characters, truncates
+  at capacity, and rejects only when nothing was accepted.
+- `inputMode` defaults to `numeric` for all-digit masks (the documented reading of FR-18) and
+  `text` otherwise; the getter also emits `autocapitalize` for upper-only letter masks and
+  `maxlength` from the longest alternative. No `role`, no `placeholder`.
+
 ## Number field (filled by plan 03)
 
 - `NumberState.rawText` is canonical editing text with `.` as the decimal: `""`, `"-"`, `"12."`,
@@ -170,7 +188,7 @@ selection; framework adapters never bind `value` reactively.
 | 01 | core foundations: types, editable map, sticky caret, key normalization | done |
 | 02 | core lexers: mask grammar, number lexer, decimal math | done |
 | 03 | number field: options, format/parse, reducer, keymap, getters | done |
-| 04 | masked field | filled by plan 04 |
+| 04 | masked field | done |
 | 05 | OTP field | filled by plan 05 |
 | 06 | controller, contract constants, conformance vectors | filled by plan 06 |
 | 07 | `./dom` binding | filled by plan 07 |

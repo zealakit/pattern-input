@@ -15,13 +15,21 @@ test("core entry imports without browser globals and exports the public surface"
 
   assert.deepEqual(Object.keys(module).sort(), [
     "MaskPatternError",
+    "MaskedOptionsError",
     "NumberOptionsError",
+    "createMaskedState",
     "createNumberState",
+    "formatMasked",
     "formatNumber",
+    "getMaskedInputProps",
     "getNumberInputProps",
+    "maskedKeyToEvent",
+    "maskedReducer",
     "numberKeyToEvent",
     "numberReducer",
+    "parseMaskedText",
     "parseNumberText",
+    "resolveMaskedOptions",
     "resolveNumberOptions",
   ]);
 });
