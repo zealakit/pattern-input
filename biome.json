@@ -53,7 +53,11 @@
       "linter": {
         "rules": {
           "correctness": {
-            "noComponentHookFactories": "off"
+            "noComponentHookFactories": "off",
+            "useHookAtTopLevel": "off"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "off"
           }
         }
       }
@@ -89,6 +93,16 @@
             "useFocusableInteractive": "off",
             "useSemanticElements": "off",
             "useAriaPropsForRole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/react/src/components/otp-input.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noArrayIndexKey": "off"
           }
         }
       }

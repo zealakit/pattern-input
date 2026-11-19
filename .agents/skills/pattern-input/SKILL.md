@@ -90,6 +90,23 @@ string.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
+## React adapter (filled by plan 09)
+
+`@zealakit/pattern-input-react` mirrors the vanilla behavior with hooks and thin components.
+
+- `useNumberInput`, `useMaskedInput`, `useOtpInput` create the controller once
+  (`useState`/`useRef`), push options through `controller.setOptions` in a layout effect (a plain
+  `useEffect` on the server), and read state with
+  `useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)`.
+- `getInputProps(extra?)` returns `toReactProps(...)` (camelCase), `defaultValue` with the initial
+  formatted text, and a merged `ref` that attaches/detaches the DOM binding (StrictMode-safe).
+  It **never** passes `value` (D5) — the DOM binding owns `el.value`.
+- OTP: `getGroupProps()` (includes the group ref), `getSlotProps(index)` (each with its ref and
+  `refresh()` wiring), `getHiddenInputProps()`.
+- `NumberInput`, `MaskedInput`, `OtpInput` render only the field's own elements; `OtpInput`
+  accepts `groupProps` and per-slot `slotProps` passthrough.
+- Controlled without `onValueChange` throws during render, matching the core contract.
+
 ## Vanilla adapter (filled by plan 08)
 
 `@zealakit/pattern-input-vanilla` is the reference adapter: a thin layer over the controller and
@@ -288,7 +305,7 @@ selection; framework adapters never bind `value` reactively.
 | 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | done |
-| 08–11 | vanilla / React / Vue / Svelte adapters | 08 done; 09–11 pending |
+| 08–11 | vanilla / React / Vue / Svelte adapters | 08–09 done; 10–11 pending |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
 | 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |
 
