@@ -63,6 +63,27 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## Number field (filled by plan 03)
+
+- `NumberState.rawText` is canonical editing text with `.` as the decimal: `""`, `"-"`, `"12."`,
+  `"1.50"` survive while typing. `rawValue` and `formattedValue` are derived from it, and
+  `formatNumber` returns `{ text, map }` where every rawText character is exactly one map unit.
+- `resolveNumberOptions` is cached per options identity; it resolves separators from `locale`
+  once via `Intl.NumberFormat(...).formatToParts`, and explicit `decimalSeparator` /
+  `groupSeparator` (`""` disables grouping) win. Reducers and getters take the resolved object.
+- Reducer rules: over-precision keystrokes are rejected with the identical state (never rounded
+  while typing), typing the locale decimal or `.` inserts the decimal, `-` toggles the sign,
+  paste is lexed then validated with one documented separator-swap retry, and composition
+  defers every text change to `composeEnd`.
+- Commit (Enter/blur) normalizes (`"-"`/`"12."` → `""`/`"12"`), rounds per `rounding`, pads to
+  `minimumFractionDigits`, clamps per `clampBehavior` (`"none"` keeps the value and marks
+  `invalid` with reason `"range"`), then runs the consumer `validate`. A rejected event returns
+  the same state object (NFR-3).
+- `getNumberInputProps` emits `type`, `inputmode`, `autocomplete`, `autocorrect`, `spellcheck`,
+  `enterkeyhint`, and optional `aria-invalid` / `aria-describedby` / `aria-required` /
+  `disabled` / `readonly`. It never emits `role`, and `aria-invalid` only appears for a real
+  invalid state (never for incomplete).
+
 ## Mask grammar (filled by plan 02)
 
 Frozen for v1 — adding a form requires a BRD change:
@@ -148,7 +169,7 @@ selection; framework adapters never bind `value` reactively.
 | 00 | workspace, tooling, empty packages, scripts, agents | done |
 | 01 | core foundations: types, editable map, sticky caret, key normalization | done |
 | 02 | core lexers: mask grammar, number lexer, decimal math | done |
-| 03 | number field: options, format/parse, reducer, keymap, getters | filled by plan 03 |
+| 03 | number field: options, format/parse, reducer, keymap, getters | done |
 | 04 | masked field | filled by plan 04 |
 | 05 | OTP field | filled by plan 05 |
 | 06 | controller, contract constants, conformance vectors | filled by plan 06 |

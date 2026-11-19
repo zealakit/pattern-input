@@ -52,9 +52,9 @@
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit && tsc -p tsconfig.pure.json --noEmit",
-    "test": "pnpm build && node --test tests/*.test.ts tests/shared/*.test.ts tests/lexers/*.test.ts",
+    "test": "pnpm build && node --test tests/*.test.ts tests/shared/*.test.ts tests/lexers/*.test.ts tests/number/*.test.ts",
     "test:dom": "pnpm build && node --import ./tests/setup.ts --test tests/dom/*.test.ts",
-    "test:watch": "node --test --watch tests/*.test.ts tests/shared/*.test.ts tests/lexers/*.test.ts",
+    "test:watch": "node --test --watch tests/*.test.ts tests/shared/*.test.ts tests/lexers/*.test.ts tests/number/*.test.ts",
     "clean": "rm -rf dist",
     "prepack": "pnpm run build"
   },

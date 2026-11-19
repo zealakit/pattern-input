@@ -13,7 +13,17 @@ test("core entry imports without browser globals and exports the public surface"
   const entry = new URL("../dist/index.js", import.meta.url).href;
   const module = await import(entry);
 
-  assert.deepEqual(Object.keys(module), ["MaskPatternError"]);
+  assert.deepEqual(Object.keys(module).sort(), [
+    "MaskPatternError",
+    "NumberOptionsError",
+    "createNumberState",
+    "formatNumber",
+    "getNumberInputProps",
+    "numberKeyToEvent",
+    "numberReducer",
+    "parseNumberText",
+    "resolveNumberOptions",
+  ]);
 });
 
 test("core dom entry imports without touching the document", async () => {

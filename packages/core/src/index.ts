@@ -6,3 +6,20 @@ export type {
 } from "./shared/index.js";
 export { MaskPatternError } from "./lexers/index.js";
 export type { MaskTokenDefinition } from "./lexers/index.js";
+export type {
+  NumberEvent,
+  NumberInputProps,
+  NumberOptions,
+  NumberState,
+  ResolvedNumberOptions,
+} from "./number/index.js";
+export {
+  createNumberState,
+  formatNumber,
+  getNumberInputProps,
+  numberKeyToEvent,
+  NumberOptionsError,
+  numberReducer,
+  parseNumberText,
+  resolveNumberOptions,
+} from "./number/index.js";
