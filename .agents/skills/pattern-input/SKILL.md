@@ -63,6 +63,24 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## OTP field (filled by plan 05)
+
+- N single-character slots (1..32). `slots` keeps position with `""` for empty and is exactly
+  `length` long; `rawValue` compacts the gaps and `formattedValue === rawValue`. Status is
+  empty / incomplete / complete, and `invalid` only comes from the consumer `validate` on commit.
+- Insert writes the active slot and advances, clamped at the last slot. A multi-character insert
+  (autofill, mobile keyboards dumping the whole code into one field) is treated as paste.
+  Paste distributes from slot 0 when the code is at least `length` long, otherwise from the
+  active slot, truncates overflow, and leaves `activeIndex` on the last filled slot.
+- Backspace clears a filled active slot and stays; when the active slot is already empty it
+  clears the previous slot and retreats. `unit: "line"` clears everything.
+- `focusSlot` clamps to the first empty slot, so focus order survives deletion; the getters
+  expose roving `tabindex` so Tab enters and leaves the group once (FR-13).
+- Getters: `getOtpGroupProps` (`role="group"` + label/labelledBy/describedBy/`aria-invalid`),
+  `getOtpSlotProps` (inputmode, pattern, slot label, slot 0 only carries
+  `autocomplete="one-time-code"` and `maxlength = length` for autofill), and
+  `getOtpHiddenInputProps` (`type="hidden"`, `name`, `value = rawValue`) for form submission.
+
 ## Masked field (filled by plan 04)
 
 - `MaskedState.rawValue` holds editable characters only; literals are always re-derived by
@@ -189,7 +207,7 @@ selection; framework adapters never bind `value` reactively.
 | 02 | core lexers: mask grammar, number lexer, decimal math | done |
 | 03 | number field: options, format/parse, reducer, keymap, getters | done |
 | 04 | masked field | done |
-| 05 | OTP field | filled by plan 05 |
+| 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | filled by plan 06 |
 | 07 | `./dom` binding | filled by plan 07 |
 | 08–11 | vanilla / React / Vue / Svelte adapters | filled by plans 08–11 |

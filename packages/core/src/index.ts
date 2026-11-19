@@ -20,6 +20,15 @@ export type {
   NumberState,
   ResolvedNumberOptions,
 } from "./number/index.js";
+export type {
+  OtpEvent,
+  OtpGroupProps,
+  OtpHiddenInputProps,
+  OtpOptions,
+  OtpSlotProps,
+  OtpState,
+  ResolvedOtpOptions,
+} from "./otp/index.js";
 export {
   createMaskedState,
   formatMasked,
@@ -40,3 +49,13 @@ export {
   parseNumberText,
   resolveNumberOptions,
 } from "./number/index.js";
+export {
+  createOtpState,
+  getOtpGroupProps,
+  getOtpHiddenInputProps,
+  getOtpSlotProps,
+  OtpOptionsError,
+  otpKeyToEvent,
+  otpReducer,
+  resolveOtpOptions,
+} from "./otp/index.js";
