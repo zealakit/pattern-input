@@ -90,6 +90,24 @@ string.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
+## Svelte adapter (filled by plan 11)
+
+`@zealakit/pattern-input-svelte` ships store-shaped factories, Svelte actions, and `.svelte`
+components, built with `svelte-package`.
+
+- `createNumberInput(getOptions)` / `createMaskedInput(getOptions)` / `createOtpInput(getOptions)`
+  create the controller once and expose a readable store (`subscribe`) plus `value()`,
+  `formattedValue()`, `status()`, `getInputProps()` (or the OTP getters), `setValue`, `clear`,
+  `focus`, `undo`, `redo`, `setOptions`, `sync()` and `attach(node)`.
+- `fieldAction` and `otpGroupAction` are Svelte actions: they attach the DOM binding and detach
+  on destroy. The OTP factory finds its slots with
+  `input:not([type="hidden"])` inside the group.
+- Components (`NumberInput`, `MaskedInput`, `OtpInput`) accept `bind:value`-friendly props and an
+  `onchange` callback with the full `ValueChange`; they call `field.sync()` in `$effect.pre` so
+  option changes land before the DOM update. On the server only they render the initial formatted
+  text as a `value` attribute.
+- `getInputProps()` never includes `value` (D5).
+
 ## Vue adapter (filled by plan 10)
 
 `@zealakit/pattern-input-vue` uses composables plus render-function components (no SFCs in the package).
@@ -324,7 +342,7 @@ selection; framework adapters never bind `value` reactively.
 | 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | done |
-| 08–11 | vanilla / React / Vue / Svelte adapters | 08–10 done; 11 pending |
+| 08–11 | vanilla / React / Vue / Svelte adapters | all done |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
 | 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |
 

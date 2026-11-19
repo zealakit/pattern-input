@@ -1,15 +1,13 @@
 import { test } from "node:test";
 
 /**
- * The adapter ships no behavior yet (plan 11 adds actions/factories and
- * components), so the built entry must stay empty and import cleanly.
+ * The adapter is built by svelte-package; importing the entry in Node needs the
+ * `.svelte` compile hook, so the smoke check targets the factory entry only.
  */
-test("svelte entry imports under happy-dom and exports nothing", async () => {
-  const entry = new URL("../dist/index.js", import.meta.url).href;
-  const module = await import(entry);
-
-  const keys = Object.keys(module);
-  if (keys.length !== 0) {
-    throw new Error(`Unexpected exports: ${keys.join(", ")}`);
+test("svelte factories import under happy-dom and export the contract", async () => {
+  const module = await import("../dist/fields/number-input.js");
+  const field = module.createNumberInput(() => ({}));
+  if (typeof field.getInputProps !== "function") {
+    throw new Error("missing getInputProps");
   }
 });
