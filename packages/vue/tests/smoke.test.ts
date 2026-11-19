@@ -8,8 +8,20 @@ test("vue entry imports under happy-dom and exports nothing", async () => {
   const entry = new URL("../dist/index.js", import.meta.url).href;
   const module = await import(entry);
 
-  const keys = Object.keys(module);
-  if (keys.length !== 0) {
+  const keys = Object.keys(module).sort();
+  const expected = [
+    "CONTRACT_VERSION",
+    "GETTER_NAMES",
+    "INSTANCE_API",
+    "MaskedInput",
+    "NumberInput",
+    "OtpInput",
+    "PatternInputError",
+    "useMaskedInput",
+    "useNumberInput",
+    "useOtpInput",
+  ];
+  if (JSON.stringify(keys) !== JSON.stringify(expected)) {
     throw new Error(`Unexpected exports: ${keys.join(", ")}`);
   }
 });

@@ -90,6 +90,25 @@ string.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
+## Vue adapter (filled by plan 10)
+
+`@zealakit/pattern-input-vue` uses composables plus render-function components (no SFCs in the package).
+
+- `useNumberInput` / `useMaskedInput` / `useOtpInput` take the options as
+  `MaybeRefOrGetter`; a `watch(..., { flush: "sync", immediate: true })` pushes them to
+  `controller.setOptions`, so a controlled approval lands in the same tick. The controller is kept
+  in a plain variable (never wrapped in a reactive proxy); state is a `shallowRef` fed by
+  `controller.subscribe`.
+- State is exposed as functions (`value()`, `formattedValue()`, `status()`) plus computed state;
+  `inputRef` is a function ref (attached on element, detached on `null` and on scope dispose).
+- `getInputProps()` returns DOM attribute names unchanged (Vue accepts them) and never binds
+  `value`.
+- Components (`NumberInput`, `MaskedInput`, `OtpInput`) support `v-model`
+  (`modelValue` + `update:modelValue`) and emit `change` with the full `ValueChange`. On the
+  server only, the component renders the initial formatted text as a `value` attribute.
+- `OtpInput` renders the group, N slots and the hidden aggregate input; slot refs are stable per
+  index so Vue patches do not detach/re-attach the binding.
+
 ## React adapter (filled by plan 09)
 
 `@zealakit/pattern-input-react` mirrors the vanilla behavior with hooks and thin components.
@@ -305,7 +324,7 @@ selection; framework adapters never bind `value` reactively.
 | 05 | OTP field | done |
 | 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | done |
-| 08–11 | vanilla / React / Vue / Svelte adapters | 08–09 done; 10–11 pending |
+| 08–11 | vanilla / React / Vue / Svelte adapters | 08–10 done; 11 pending |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
 | 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |
 
