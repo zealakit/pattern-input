@@ -10,6 +10,7 @@ export { parseMaskedText } from "./parse.js";
 export type { MaskedState } from "./state.js";
 export {
   createMaskedState,
+  createMaskedStateFrom,
   isMaskedComplete,
   maskedStatusOf,
 } from "./state.js";

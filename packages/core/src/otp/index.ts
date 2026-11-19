@@ -8,6 +8,7 @@ export type { OtpState } from "./state.js";
 export {
   buildOtpState,
   createOtpState,
+  createOtpStateFrom,
   distributeSlots,
   emptySlots,
   firstEmptyIndex,

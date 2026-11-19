@@ -103,12 +103,11 @@ export function buildMaskedState(
   });
 }
 
-/** Create the initial masked state from an optional raw value. */
-export function createMaskedState(
-  options: MaskedOptions,
+/** Create the initial masked state from already-resolved options. */
+export function createMaskedStateFrom(
+  resolved: ResolvedMaskedOptions,
   initialRaw = "",
 ): MaskedState {
-  const resolved = resolveMaskedOptions(options);
   const alternativeIndex = selectAlternative(resolved.mask, initialRaw);
   const base: MaskedState = {
     kind: "masked",
@@ -130,4 +129,12 @@ export function createMaskedState(
     base,
     { committedRaw: initialRaw },
   );
+}
+
+/** Create the initial masked state from an optional raw value. */
+export function createMaskedState(
+  options: MaskedOptions,
+  initialRaw = "",
+): MaskedState {
+  return createMaskedStateFrom(resolveMaskedOptions(options), initialRaw);
 }

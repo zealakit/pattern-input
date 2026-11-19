@@ -1,0 +1,94 @@
+[
+  {
+    "name": "AC-4 paste 123.456.789-00 fills the mask and completes",
+    "field": "masked",
+    "options": { "mask": "999.999.999-99" },
+    "steps": [{ "event": { "type": "paste", "text": "123.456.789-00" } }],
+    "expect": {
+      "value": "12345678900",
+      "formattedValue": "123.456.789-00",
+      "status": "complete",
+      "caret": 14,
+      "changes": 1
+    }
+  },
+  {
+    "name": "AC-4 partial paste is incomplete, never invalid",
+    "field": "masked",
+    "options": { "mask": "999.999.999-99" },
+    "steps": [{ "event": { "type": "paste", "text": "12345" } }],
+    "expect": {
+      "value": "12345",
+      "formattedValue": "123.45",
+      "status": "incomplete",
+      "caret": 6,
+      "changes": 1
+    }
+  },
+  {
+    "name": "focused typing shows the literal that follows the last slot",
+    "field": "masked",
+    "options": { "mask": "999.999" },
+    "steps": [{ "event": { "type": "focus" } }, { "typeText": "123" }],
+    "expect": { "formattedValue": "123.", "caret": 3, "changes": 3 }
+  },
+  {
+    "name": "letters are rejected by a digit mask",
+    "field": "masked",
+    "options": { "mask": "999" },
+    "steps": [{ "typeText": "a" }],
+    "expect": { "value": "", "formattedValue": "", "changes": 0 }
+  },
+  {
+    "name": "overlong paste truncates at capacity",
+    "field": "masked",
+    "options": { "mask": "999.999" },
+    "steps": [{ "event": { "type": "paste", "text": "1234567890" } }],
+    "expect": {
+      "value": "123456",
+      "formattedValue": "123.456",
+      "status": "complete",
+      "changes": 1
+    }
+  },
+  {
+    "name": "alternatives switch as raw grows",
+    "field": "masked",
+    "options": { "mask": ["99", "999"] },
+    "steps": [{ "typeText": "123" }],
+    "expect": {
+      "value": "123",
+      "formattedValue": "123",
+      "status": "complete",
+      "changes": 3
+    }
+  },
+  {
+    "name": "optional group completes when absent",
+    "field": "masked",
+    "options": { "mask": "999[.999]" },
+    "steps": [{ "typeText": "123" }],
+    "expect": {
+      "value": "123",
+      "formattedValue": "123",
+      "status": "complete",
+      "changes": 3
+    }
+  },
+  {
+    "name": "always-literal mode renders placeholders",
+    "field": "masked",
+    "options": {
+      "mask": "999-999",
+      "showLiterals": "always",
+      "placeholderChar": "_"
+    },
+    "steps": [{ "typeText": "12" }],
+    "expect": {
+      "value": "12",
+      "formattedValue": "12_-___",
+      "status": "incomplete",
+      "changes": 2
+    }
+  }
+]

@@ -294,6 +294,18 @@ function applyCommit(
   );
 }
 
+function sameSelection(
+  left: MaskedState["selection"],
+  right: MaskedState["selection"],
+): boolean {
+  return (
+    left.anchor.offset === right.anchor.offset &&
+    left.anchor.affinity === right.anchor.affinity &&
+    left.focus.offset === right.focus.offset &&
+    left.focus.affinity === right.focus.affinity
+  );
+}
+
 const CHANGES_TEXT = new Set(["insert", "delete", "paste", "setValue"]);
 
 /** Pure masked-field reducer; rejected events return the same object. */
@@ -344,27 +356,33 @@ export function maskedReducer(
         ? cleared
         : applyInsert(cleared, event.text, resolved);
     }
-    case "move":
-      return buildMaskedState(
-        state.rawValue,
-        state.alternativeIndex,
-        resolved,
-        moveCaret(
-          state.selection,
-          event.to,
-          event.extend,
-          state.rawValue.length,
-        ),
-        state,
+    case "move": {
+      const selection = moveCaret(
+        state.selection,
+        event.to,
+        event.extend,
+        state.rawValue.length,
       );
+      return selection === state.selection
+        ? state
+        : buildMaskedState(
+            state.rawValue,
+            state.alternativeIndex,
+            resolved,
+            selection,
+            state,
+          );
+    }
     case "select":
-      return buildMaskedState(
-        state.rawValue,
-        state.alternativeIndex,
-        resolved,
-        event.selection,
-        state,
-      );
+      return sameSelection(event.selection, state.selection)
+        ? state
+        : buildMaskedState(
+            state.rawValue,
+            state.alternativeIndex,
+            resolved,
+            event.selection,
+            state,
+          );
     case "commit":
       return state.composing ? state : applyCommit(state, resolved, false);
     case "blur": {

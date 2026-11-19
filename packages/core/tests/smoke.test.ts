@@ -14,15 +14,25 @@ test("core entry imports without browser globals and exports the public surface"
   const module = await import(entry);
 
   assert.deepEqual(Object.keys(module).sort(), [
+    "CONTRACT_VERSION",
+    "GETTER_NAMES",
+    "INSTANCE_API",
     "MaskPatternError",
     "MaskedOptionsError",
     "NumberOptionsError",
     "OtpOptionsError",
+    "PatternInputError",
+    "REACT_PROP_NAMES",
+    "createFieldController",
+    "createMaskedController",
     "createMaskedState",
+    "createNumberController",
     "createNumberState",
+    "createOtpController",
     "createOtpState",
     "formatMasked",
     "formatNumber",
+    "getClipboardText",
     "getMaskedInputProps",
     "getNumberInputProps",
     "getOtpGroupProps",
@@ -39,6 +49,7 @@ test("core entry imports without browser globals and exports the public surface"
     "resolveMaskedOptions",
     "resolveNumberOptions",
     "resolveOtpOptions",
+    "toReactProps",
   ]);
 });
 

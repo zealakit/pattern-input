@@ -71,12 +71,11 @@ export function buildNumberState(
   });
 }
 
-/** Create the initial number state; `initial` is rounded like `setValue`. */
-export function createNumberState(
-  options: NumberOptions = {},
-  initial: number | null = null,
+/** Create the initial number state from already-resolved options. */
+export function createNumberStateFrom(
+  resolved: ResolvedNumberOptions,
+  initial: number | null,
 ): NumberState {
-  const resolved = resolveNumberOptions(options);
   const rawText =
     initial === null || Number.isNaN(initial) ? "" : fromNumber(initial);
   const base: NumberState = {
@@ -97,4 +96,12 @@ export function createNumberState(
     caret(rawText.length, "before"),
     base,
   );
+}
+
+/** Create the initial number state; `initial` is rounded like `setValue`. */
+export function createNumberState(
+  options: NumberOptions = {},
+  initial: number | null = null,
+): NumberState {
+  return createNumberStateFrom(resolveNumberOptions(options), initial);
 }

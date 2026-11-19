@@ -105,9 +105,11 @@ export function distributeSlots(
   return { slots: Object.freeze(next), lastFilled };
 }
 
-/** Create the initial OTP state, distributing an optional value from slot 0. */
-export function createOtpState(options: OtpOptions, initial = ""): OtpState {
-  const resolved = resolveOtpOptions(options);
+/** Create the initial OTP state from already-resolved options. */
+export function createOtpStateFrom(
+  resolved: ResolvedOtpOptions,
+  initial = "",
+): OtpState {
   const base: OtpState = {
     kind: "otp",
     slots: emptySlots(resolved.length),
@@ -129,4 +131,9 @@ export function createOtpState(options: OtpOptions, initial = ""): OtpState {
   const nextEmpty = firstEmptyIndex(distributed.slots);
   const activeIndex = nextEmpty === -1 ? resolved.length - 1 : nextEmpty;
   return buildOtpState(base, distributed.slots, activeIndex, resolved);
+}
+
+/** Create the initial OTP state, distributing an optional value from slot 0. */
+export function createOtpState(options: OtpOptions, initial = ""): OtpState {
+  return createOtpStateFrom(resolveOtpOptions(options), initial);
 }

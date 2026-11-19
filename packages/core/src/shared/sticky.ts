@@ -165,6 +165,9 @@ export function moveCaret(
       break;
   }
 
+  if (target === focusOffset && !extend) {
+    return selection;
+  }
   const next: StickyAnchor = { offset: target, affinity: "after" };
   return extend
     ? { anchor: selection.anchor, focus: next }

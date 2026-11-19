@@ -417,6 +417,18 @@ function applySetValue(
   );
 }
 
+function sameSelection(
+  left: NumberState["selection"],
+  right: NumberState["selection"],
+): boolean {
+  return (
+    left.anchor.offset === right.anchor.offset &&
+    left.anchor.affinity === right.anchor.affinity &&
+    left.focus.offset === right.focus.offset &&
+    left.focus.affinity === right.focus.affinity
+  );
+}
+
 const CHANGES_TEXT = new Set(["insert", "delete", "paste", "setValue", "step"]);
 
 /** Pure number-field reducer; a rejected event returns the same object. */
@@ -465,20 +477,21 @@ export function numberReducer(
         ? cleared
         : applyInsert(cleared, event.text, resolved);
     }
-    case "move":
-      return buildNumberState(
-        state.rawText,
-        resolved,
-        moveCaret(
-          state.selection,
-          event.to,
-          event.extend,
-          state.rawText.length,
-        ),
-        state,
+    case "move": {
+      const selection = moveCaret(
+        state.selection,
+        event.to,
+        event.extend,
+        state.rawText.length,
       );
+      return selection === state.selection
+        ? state
+        : buildNumberState(state.rawText, resolved, selection, state);
+    }
     case "select":
-      return buildNumberState(state.rawText, resolved, event.selection, state);
+      return sameSelection(event.selection, state.selection)
+        ? state
+        : buildNumberState(state.rawText, resolved, event.selection, state);
     case "step":
       return applyStep(state, event, resolved);
     case "commit":

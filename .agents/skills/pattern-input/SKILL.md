@@ -63,6 +63,39 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## Controller and modes (filled by plan 06)
+
+- `createNumberController`, `createMaskedController`, `createOtpController` (or
+  `createFieldController(binding, options)`) run a field without touching the DOM: `getState()`,
+  `subscribe()`, `dispatch()`, `handleKey()`, `setOptions()`, `setValue()`, `clear()`, `focus()`,
+  `undo()`, `redo()`, `destroy()`, plus `value` / `formattedValue` / `status` / `controlled`.
+- Controlled when a `value` key is present (for number even `null`). Controlled without
+  `onValueChange` (and not `readOnly`) throws `PatternInputError`
+  code `CONTROLLED_WITHOUT_HANDLER`.
+- Controlled edits reduce to a proposal; `getState()` keeps the approved state until `setOptions`
+  supplies the matching value, which adopts the proposal **including its caret**. Re-supplying
+  the approved value drops the proposal, so a rejected paste is never shown (AC-7). A transformed
+  value creates fresh state with the caret at the end.
+- Focus, caret and selection changes are local UI state in both modes: adopted immediately,
+  never emitted as value changes (FR-8).
+- Uncontrolled changes emit `onValueChange` once per value/status change, deduped by value.
+- History is a bounded 100-entry stack: consecutive inserts merge while within 1 s and without a
+  caret jump (`now` is injectable for deterministic tests); undo/redo restore value **and** caret.
+  In controlled mode undo/redo are proposals too.
+- `getClipboardText(state, binding, resolved)` returns the formatted substring of the selection,
+  which always parses back into the same field (FR-16).
+
+## Contract (filled by plan 06)
+
+- `CONTRACT_VERSION = "1.0.0"`.
+- `GETTER_NAMES`: number/masked expose `getInputProps`; OTP exposes `getGroupProps`,
+  `getSlotProps`, `getHiddenInputProps`.
+- `INSTANCE_API`: `value`, `formattedValue`, `status`, `setValue`, `clear`, `focus`, `undo`,
+  `redo` — every adapter returns these.
+- `REACT_PROP_NAMES` + `toReactProps` map DOM-shaped getter output to React props.
+- Framework-neutral conformance vectors live in `packages/core/tests/vectors/*.json`
+  (number, masked, otp, controlled) and every adapter replays them through its own renderer.
+
 ## OTP field (filled by plan 05)
 
 - N single-character slots (1..32). `slots` keeps position with `""` for empty and is exactly
@@ -208,7 +241,7 @@ selection; framework adapters never bind `value` reactively.
 | 03 | number field: options, format/parse, reducer, keymap, getters | done |
 | 04 | masked field | done |
 | 05 | OTP field | done |
-| 06 | controller, contract constants, conformance vectors | filled by plan 06 |
+| 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | filled by plan 07 |
 | 08–11 | vanilla / React / Vue / Svelte adapters | filled by plans 08–11 |
 | 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |

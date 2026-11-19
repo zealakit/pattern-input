@@ -29,6 +29,30 @@ export type {
   OtpState,
   ResolvedOtpOptions,
 } from "./otp/index.js";
+export type {
+  ChangeReason,
+  FieldController,
+  FieldControllerOptions,
+  PatternInputErrorCode,
+  ValueChange,
+} from "./controller/index.js";
+export type { FieldBinding, FormattedField } from "./controller/binding.js";
+export {
+  createFieldController,
+  createMaskedController,
+  createNumberController,
+  createOtpController,
+  getClipboardText,
+  PatternInputError,
+} from "./controller/index.js";
+export {
+  CONTRACT_VERSION,
+  type FieldKind,
+  GETTER_NAMES,
+  INSTANCE_API,
+  REACT_PROP_NAMES,
+  toReactProps,
+} from "./contract.js";
 export {
   createMaskedState,
   formatMasked,

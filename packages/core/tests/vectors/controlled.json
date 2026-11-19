@@ -1,0 +1,68 @@
+[
+  {
+    "name": "AC-7 rejected paste keeps the approved state and caret",
+    "field": "number",
+    "options": { "maximumFractionDigits": 2, "value": 123 },
+    "steps": [
+      { "event": { "type": "focus" } },
+      { "event": { "type": "paste", "text": "999999" } },
+      { "reject": true }
+    ],
+    "expect": {
+      "value": 123,
+      "formattedValue": "123",
+      "caret": 3,
+      "changes": 1
+    }
+  },
+  {
+    "name": "approved proposal is adopted with its caret",
+    "field": "number",
+    "options": { "value": 12 },
+    "steps": [
+      { "event": { "type": "insert", "text": "3" } },
+      { "approve": true }
+    ],
+    "expect": {
+      "value": 123,
+      "formattedValue": "123",
+      "caret": 3,
+      "changes": 1
+    }
+  },
+  {
+    "name": "consumer-transformed value resets the caret to the end",
+    "field": "number",
+    "options": { "value": 12 },
+    "steps": [
+      { "event": { "type": "insert", "text": "3" } },
+      { "supply": 999 }
+    ],
+    "expect": { "value": 999, "formattedValue": "999", "caret": 3 }
+  },
+  {
+    "name": "OTP controlled paste is approved",
+    "field": "otp",
+    "options": { "length": 6, "value": "" },
+    "steps": [
+      { "event": { "type": "paste", "text": "123456" } },
+      { "approve": true }
+    ],
+    "expect": {
+      "value": "123456",
+      "status": "complete",
+      "caret": 5,
+      "changes": 1
+    }
+  },
+  {
+    "name": "masked controlled edit can be rejected",
+    "field": "masked",
+    "options": { "mask": "999", "value": "12" },
+    "steps": [
+      { "event": { "type": "insert", "text": "9" } },
+      { "reject": true }
+    ],
+    "expect": { "value": "12", "formattedValue": "12", "changes": 1 }
+  }
+]
