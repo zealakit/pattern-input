@@ -63,6 +63,25 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
+## Caret model (filled by plan 01)
+
+- A selection is `{ anchor, focus }`, each a `StickyAnchor { offset, affinity }` counted in
+  **raw units** (`0..rawLength`) — never in formatted-string indices.
+- `affinity: "before"` sits immediately before raw unit `offset` (skipping literals to its left);
+  `"after"` sits immediately after raw unit `offset - 1`. At offset `0`, `"after"` is the start of
+  the text; at offset `n`, `"before"` is its end.
+- A formatter returns `{ text, map }`; `units[i]` is the UTF-16 `[start, end)` range of raw unit
+  `i` inside the formatted text. UTF-16 is used everywhere so the DOM binding can feed
+  `selectionStart` directly and a surrogate pair still counts as one unit.
+- `indexToAnchor` snaps an index inside a literal run to the nearest unit boundary; on a tie the
+  right-hand boundary wins (FR-14). `anchorToIndex` and `indexToAnchor` are the only legal
+  conversions between the two coordinate systems.
+- `remapAfterEdit(selection, { at, removed, inserted })`: anchors before the edit stay, anchors
+  after it shift by `inserted - removed`, anchors inside a removed range collapse to
+  `at + inserted` with `before` affinity, and an insertion exactly at an anchor respects its
+  affinity.
+- `moveCaret` maps `prev` / `next` / `start` / `end`, with optional `extend`.
+
 ## Prop-getter contract (filled by plan 06)
 
 Getters return plain, deterministic objects that an adapter spreads onto an element or component
@@ -98,8 +117,8 @@ selection; framework adapters never bind `value` reactively.
 
 | Plan | Area | Status |
 | --- | --- | --- |
-| 00 | workspace, tooling, empty packages, scripts, agents | this plan |
-| 01 | core foundations: types, editable map, sticky caret, key normalization | filled by plan 01 |
+| 00 | workspace, tooling, empty packages, scripts, agents | done |
+| 01 | core foundations: types, editable map, sticky caret, key normalization | done |
 | 02 | core lexers: mask grammar, number lexer, decimal math | filled by plan 02 |
 | 03 | number field: options, format/parse, reducer, keymap, getters | filled by plan 03 |
 | 04 | masked field | filled by plan 04 |
