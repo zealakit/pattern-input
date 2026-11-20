@@ -49,11 +49,12 @@ pnpm lint         # Biome
 pnpm check        # build + typecheck + test + lint
 pnpm clean        # remove package/example build output and local tarballs
 pnpm pack:packages # pack the four adapter tarballs, core bundled in, into artifacts/ (no publish)
-pnpm release:check # full checks + package tarballs (no publish)
+pnpm size         # esbuild gzip budget per adapter × field
+pnpm release:check # full checks + package gates + size (no publish)
 pnpm npm:publish:check # build + test all five, pack/bundle/inspect the four adapters (no publish)
 pnpm npm:publish:all   # same preflight, then publish the four adapters (core is never published)
 pnpm readme:check # README structure: EN/VI/CN parity, absolute links, H1 = package name
-pnpm e2e          # Playwright workspace (plan 12 fills the specs)
+pnpm e2e          # Playwright: builds fixtures, runs every example on all projects
 
 pnpm dev:vanilla
 pnpm dev:react

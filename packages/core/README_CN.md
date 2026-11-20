@@ -11,7 +11,7 @@ Pattern Input 的内部、与框架无关的内核。私有、不发布：它以
 
 ## Status
 
-- 入口：`.`（纯 reducer、解析器、prop getter）与 `./dom`（唯一的 DOM 绑定）——在 plan 01–07 实现之前为空。
+- 入口：`.`（纯 reducer、解析器、prop getter、控制器）与 `./dom`（DOM 绑定）——已实现并有核心测试覆盖。
 - 检查：`tsconfig.pure.json` 证明纯入口不依赖 DOM；打包脚本会把两个入口都内置到每个适配器。
 
 ## License

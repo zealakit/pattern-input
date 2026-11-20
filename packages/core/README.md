@@ -11,7 +11,7 @@ Internal framework-independent kernel for Pattern Input. Private and never publi
 
 ## Status
 
-- Entries: `.` (pure reducers, parsers, prop getters) and `./dom` (the one DOM binding) — both empty until plans 01–07 implement them.
+- Entries: `.` (pure reducers, parsers, prop getters, controller) and `./dom` (the DOM binding) — implemented and covered by the core test suite.
 - Checks: `tsconfig.pure.json` proves the pure entry stays DOM-free; the packaging script vendors both entries into each adapter.
 
 ## License

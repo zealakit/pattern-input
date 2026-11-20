@@ -41,7 +41,30 @@ npm i @zealakit/pattern-input-svelte
 
 ## Status
 
-This release is the workspace skeleton: the packages build, typecheck, test, and pack, but they export no field behavior yet. Number, masked, and OTP behavior arrives in the follow-up plans, and the adapters stay empty until each primitive is implemented.
+This is `1.0.0-beta.1`. All three fields (number, masked, OTP) work in every adapter, with the same prop-getter contract and conformance vectors. The packages ship no styles, no validation engine, and never wrap a plain-text input.
+
+## Behavior
+
+| Capability | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| Caret survives formatting and paste | Yes | Yes | Yes |
+| Paste parsed by the field | Yes | Yes | Yes |
+| IME commits once at compositionend | Yes | Yes | Yes |
+| Correct mobile inputmode | decimal / numeric | numeric or text | numeric |
+| Controlled and uncontrolled modes | Yes | Yes | Yes |
+| Undo / redo with caret | Yes | Yes | Yes |
+| ARIA (`aria-invalid`, labels, hidden input) | Yes | Yes | Yes |
+
+## Size
+
+Min+gzip per adapter × field, measured with esbuild (`pnpm size`):
+
+| Adapter | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| vanilla | 8.3 kB | 7.4 kB | 4.9 kB |
+| react | 8.4 kB | 7.5 kB | 5.0 kB |
+| vue | 8.2 kB | 7.3 kB | 4.8 kB |
+| svelte | 8.1 kB | 7.2 kB | 6.2 kB |
 
 ## Examples
 

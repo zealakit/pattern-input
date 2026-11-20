@@ -41,7 +41,30 @@ npm i @zealakit/pattern-input-svelte
 
 ## Status
 
-Bản này là bộ khung workspace: các package build, typecheck, test và pack được, nhưng chưa export hành vi field nào. Hành vi number, masked và OTP sẽ đến trong các plan tiếp theo, và adapter vẫn rỗng cho đến khi từng primitive được implement.
+Đây là `1.0.0-beta.1`. Cả ba field (number, masked, OTP) hoạt động trong mọi adapter, cùng contract prop-getter và bộ vector conformance. Package không ship style, không có validation engine và không bọc input text thường.
+
+## Behavior
+
+| Capability | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| Caret sống sót khi format và paste | Yes | Yes | Yes |
+| Paste được field tự parse | Yes | Yes | Yes |
+| IME commit một lần tại compositionend | Yes | Yes | Yes |
+| inputmode đúng trên mobile | decimal / numeric | numeric hoặc text | numeric |
+| Chế độ controlled và uncontrolled | Yes | Yes | Yes |
+| Undo / redo kèm caret | Yes | Yes | Yes |
+| ARIA (`aria-invalid`, label, hidden input) | Yes | Yes | Yes |
+
+## Size
+
+Min+gzip cho từng adapter × field, đo bằng esbuild (`pnpm size`):
+
+| Adapter | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| vanilla | 8.3 kB | 7.4 kB | 4.9 kB |
+| react | 8.4 kB | 7.5 kB | 5.0 kB |
+| vue | 8.2 kB | 7.3 kB | 4.8 kB |
+| svelte | 8.1 kB | 7.2 kB | 6.2 kB |
 
 ## Examples
 

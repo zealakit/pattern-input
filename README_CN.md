@@ -41,7 +41,30 @@ npm i @zealakit/pattern-input-svelte
 
 ## Status
 
-本次发布是 workspace 骨架：各个包可以构建、类型检查、测试和打包，但尚未导出任何字段行为。number、masked 与 OTP 行为将在后续计划中实现，适配器在每个原语完成之前保持为空。
+当前为 `1.0.0-beta.1`。三类字段（number、masked、OTP）在所有适配器中均可使用，共享同一套 prop-getter 契约与一致性向量。包不提供样式、不内置校验引擎，也不包装普通文本输入框。
+
+## Behavior
+
+| Capability | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| 格式化与粘贴时光标保持 | Yes | Yes | Yes |
+| 粘贴由字段自身解析 | Yes | Yes | Yes |
+| IME 在 compositionend 时只提交一次 | Yes | Yes | Yes |
+| 移动端 inputmode 正确 | decimal / numeric | numeric 或 text | numeric |
+| 受控与非受控模式 | Yes | Yes | Yes |
+| 撤销 / 重做并恢复光标 | Yes | Yes | Yes |
+| ARIA（`aria-invalid`、标签、隐藏输入） | Yes | Yes | Yes |
+
+## Size
+
+每个适配器 × 字段的 min+gzip 体积，使用 esbuild 测量（`pnpm size`）：
+
+| Adapter | Number | Masked | OTP |
+| --- | --- | --- | --- |
+| vanilla | 8.3 kB | 7.4 kB | 4.9 kB |
+| react | 8.4 kB | 7.5 kB | 5.0 kB |
+| vue | 8.2 kB | 7.3 kB | 4.8 kB |
+| svelte | 8.1 kB | 7.2 kB | 6.2 kB |
 
 ## Examples
 

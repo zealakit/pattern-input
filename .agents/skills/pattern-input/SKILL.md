@@ -1,8 +1,9 @@
 # Pattern Input — architecture and contract skill
 
-Compact pre-read for code, test, docs, and release work in this repository. Plan 00 creates the
-skeleton and records the decisions below; every section marked **filled by plan NN** is still
-empty on purpose (no speculative code, no placeholder APIs).
+Compact pre-read for code, test, docs, and release work in this repository. Plans 00–13 are
+implemented: the core kernel, the DOM binding, the four adapters, the conformance vectors, the
+examples/e2e workspace, and the release gates. Everything below is current behavior — keep it in
+sync when the contract changes.
 
 ## What this is
 
@@ -63,7 +64,7 @@ Formatting and parsing are pure functions over `(rawValue, options)`. The caret 
 position counted in editable units relative to the raw value — never an index into the formatted
 string.
 
-## DOM binding (filled by plan 07)
+## DOM binding
 
 `@zealakit/pattern-input-core/dom` is the only place DOM events become controller events.
 
@@ -90,7 +91,7 @@ string.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
-## Svelte adapter (filled by plan 11)
+## Svelte adapter
 
 `@zealakit/pattern-input-svelte` ships store-shaped factories, Svelte actions, and `.svelte`
 components, built with `svelte-package`.
@@ -108,7 +109,7 @@ components, built with `svelte-package`.
   text as a `value` attribute.
 - `getInputProps()` never includes `value` (D5).
 
-## Vue adapter (filled by plan 10)
+## Vue adapter
 
 `@zealakit/pattern-input-vue` uses composables plus render-function components (no SFCs in the package).
 
@@ -127,7 +128,7 @@ components, built with `svelte-package`.
 - `OtpInput` renders the group, N slots and the hidden aggregate input; slot refs are stable per
   index so Vue patches do not detach/re-attach the binding.
 
-## React adapter (filled by plan 09)
+## React adapter
 
 `@zealakit/pattern-input-react` mirrors the vanilla behavior with hooks and thin components.
 
@@ -144,7 +145,7 @@ components, built with `svelte-package`.
   accepts `groupProps` and per-slot `slotProps` passthrough.
 - Controlled without `onValueChange` throws during render, matching the core contract.
 
-## Vanilla adapter (filled by plan 08)
+## Vanilla adapter
 
 `@zealakit/pattern-input-vanilla` is the reference adapter: a thin layer over the controller and
 the DOM binding, with no element creation.
@@ -162,7 +163,7 @@ the DOM binding, with no element creation.
   and adapter-added ones are removed. No class or style is ever written.
 - `destroy()` detaches the DOM binding, destroys the controller, and restores attributes.
 
-## Controller and modes (filled by plan 06)
+## Controller and modes
 
 - `createNumberController`, `createMaskedController`, `createOtpController` (or
   `createFieldController(binding, options)`) run a field without touching the DOM: `getState()`,
@@ -184,7 +185,7 @@ the DOM binding, with no element creation.
 - `getClipboardText(state, binding, resolved)` returns the formatted substring of the selection,
   which always parses back into the same field (FR-16).
 
-## Contract (filled by plan 06)
+## Contract
 
 - `CONTRACT_VERSION = "1.0.0"`.
 - `GETTER_NAMES`: number/masked expose `getInputProps`; OTP exposes `getGroupProps`,
@@ -195,7 +196,7 @@ the DOM binding, with no element creation.
 - Framework-neutral conformance vectors live in `packages/core/tests/vectors/*.json`
   (number, masked, otp, controlled) and every adapter replays them through its own renderer.
 
-## OTP field (filled by plan 05)
+## OTP field
 
 - N single-character slots (1..32). `slots` keeps position with `""` for empty and is exactly
   `length` long; `rawValue` compacts the gaps and `formattedValue === rawValue`. Status is
@@ -213,7 +214,7 @@ the DOM binding, with no element creation.
   `autocomplete="one-time-code"` and `maxlength = length` for autofill), and
   `getOtpHiddenInputProps` (`type="hidden"`, `name`, `value = rawValue`) for form submission.
 
-## Masked field (filled by plan 04)
+## Masked field
 
 - `MaskedState.rawValue` holds editable characters only; literals are always re-derived by
   `formatMasked(raw, alternative, resolved, { trailingLiterals })` against the selected
@@ -231,7 +232,7 @@ the DOM binding, with no element creation.
   `text` otherwise; the getter also emits `autocapitalize` for upper-only letter masks and
   `maxlength` from the longest alternative. No `role`, no `placeholder`.
 
-## Number field (filled by plan 03)
+## Number field
 
 - `NumberState.rawText` is canonical editing text with `.` as the decimal: `""`, `"-"`, `"12."`,
   `"1.50"` survive while typing. `rawValue` and `formattedValue` are derived from it, and
@@ -252,7 +253,7 @@ the DOM binding, with no element creation.
   `disabled` / `readonly`. It never emits `role`, and `aria-invalid` only appears for a real
   invalid state (never for incomplete).
 
-## Mask grammar (filled by plan 02)
+## Mask grammar
 
 Frozen for v1 — adding a form requires a BRD change:
 
@@ -280,7 +281,7 @@ and ASCII digits only in v1. Ambiguity such as `1,234` vs `1.234` is decided by 
 guessed. All number math runs on canonical decimal strings (`decimal.ts`) so there is no
 binary-float drift; `toNumber` returns `null` beyond `Number.MAX_SAFE_INTEGER`.
 
-## Caret model (filled by plan 01)
+## Caret model
 
 - A selection is `{ anchor, focus }`, each a `StickyAnchor { offset, affinity }` counted in
   **raw units** (`0..rawLength`) — never in formatted-string indices.
@@ -299,7 +300,7 @@ binary-float drift; `toNumber` returns `null` beyond `Number.MAX_SAFE_INTEGER`.
   affinity.
 - `moveCaret` maps `prev` / `next` / `start` / `end`, with optional `extend`.
 
-## Prop-getter contract (filled by plan 06)
+## Prop-getter contract
 
 Getters return plain, deterministic objects that an adapter spreads onto an element or component
 props. Same state + same options → same object; callers may call them every render.
@@ -316,14 +317,14 @@ Rules: never emit `role` on a native input; `aria-invalid` reflects real invalid
 is announced that is not visible; the OTP group is one accessible control while its slots remain
 individually focusable.
 
-## Modes (filled by plan 06)
+## Modes
 
 - Uncontrolled: the field owns state and emits change proposals.
 - Controlled: the consumer supplies `value` and receives proposals; the field never renders a value
   the consumer did not approve (the only exception is a documented optimistic echo during composition).
 - Controlled without a change handler is an error, never a silent uncontrolled fallback.
 
-## DOM binding (filled by plan 07)
+## DOM binding
 
 One implementation for every adapter: `beforeinput` (primary) with `input` fallback,
 `compositionstart/update/end`, `keydown` mapping, `paste`/`cut`/`copy`, `selectionchange`/
@@ -343,8 +344,17 @@ selection; framework adapters never bind `value` reactively.
 | 06 | controller, contract constants, conformance vectors | done |
 | 07 | `./dom` binding | done |
 | 08–11 | vanilla / React / Vue / Svelte adapters | all done |
-| 12 | examples, Playwright e2e, a11y audit | filled by plan 12 |
-| 13 | release gates: package/size/SSR checks, READMEs, skills | filled by plan 13 |
+| 12 | examples, Playwright e2e, a11y audit | done |
+| 13 | release gates: package/size/SSR checks, READMEs, skills | done |
+
+## Release gates (plan 13)
+
+- `pnpm size` — esbuild gzip budget per adapter × field (current ceiling 10 kB; the original 6 kB
+  target was not reachable with the shared controller+kernel, numbers are recorded in the READMEs).
+- `pnpm pack:packages` — four adapter tarballs with core vendored at `dist/vendor/core/`.
+- `node scripts/check-packages.mjs` — manifest, tarball contents, and DOM-free import checks.
+- `pnpm release:check` — the full chain; `pnpm npm:publish:check` adds the publish dry run.
+- `pnpm e2e` — Playwright against all five examples (not part of `pnpm check`).
 
 ## Hard boundaries (short list)
 

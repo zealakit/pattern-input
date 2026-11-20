@@ -4,10 +4,10 @@
 
 ![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
 
-Hành vi headless cho input number, masked và one-time-code với Vanilla JS / TS. Adapter gắn hành vi vào element do bạn sở hữu; không ship style và không bọc lại input text thường.
+Gắn hành vi number, masked và one-time-code vào input do bạn sở hữu với Vanilla JS / TS.
 
 > **Note**
-> Package này là bộ khung trong `1.0.0-beta.1`. Nó chưa export gì: các hàm `create*` cho field sẽ đến trong plan 08. Contract prop-getter được mô tả trong README gốc và skill của repository.
+> Package không ship CSS, class hay validation engine. Nó gắn hành vi vào element của bạn; bạn giữ toàn quyền về style và luật.
 
 ## Install
 
@@ -15,10 +15,34 @@ Hành vi headless cho input number, masked và one-time-code với Vanilla JS / 
 npm i @zealakit/pattern-input-vanilla
 ```
 
-## Status
+## API
 
-- Package: build được, có type, an toàn SSR và đóng gói kèm core nội bộ.
-- Hành vi: chưa có; không export API nào trước khi được implement.
+Ba field dùng chung một contract. Đổi `createNumberInput` thành `createMaskedInput` hoặc `createOtpInput` (tương tự với hook/composable).
+
+```ts
+import { createNumberInput } from "@zealakit/pattern-input-vanilla";
+
+const field = createNumberInput(input, { maximumFractionDigits: 2 });
+
+field.getInputProps();      // attributes for the host input
+field.value;                // 1234.56
+field.formattedValue;       // "1,234.56"
+field.status;               // empty | incomplete | complete | invalid
+field.setValue(99); field.clear(); field.undo(); field.redo();
+field.destroy();
+```
+
+## Contract
+
+Mọi field expose `value`, `formattedValue`, `status`, cùng `setValue`, `clear`, `focus`, `undo`, `redo`. Getter tên `getInputProps` cho number và masked, `getGroupProps` / `getSlotProps` / `getHiddenInputProps` cho OTP. `CONTRACT_VERSION` được export từ package.
+
+## Behavior
+
+- Caret và selection được giữ khi format, sửa và paste.\n- Paste được parse bởi field; literal và separator được xử lý.\n- IME commit một lần sau `compositionend`.\n- Hỗ trợ cả controlled và uncontrolled.\n- Undo/redo khôi phục value và caret.\n- ARIA: `aria-invalid` chỉ khi thật sự invalid.
+
+## Non-goals
+
+- Không có style, theme hay class mặc định.\n- Không có schema validation (chỉ callback của consumer).\n- Không bọc hay thay thế input text thường.\n- Không date picker, quy đổi tiền tệ, metadata điện thoại hay gọi mạng.
 
 ## License
 
