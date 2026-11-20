@@ -6,24 +6,28 @@ type Props = {
   length: number;
   value?: string;
   options?: Record<string, unknown>;
+  slotProps?: Record<number, Record<string, unknown>>;
   onchange?: (change: unknown) => void;
   [key: string]: unknown;
 };
 
 let {
   length,
-  value = $bindable(""),
+  value = $bindable(),
   options = {},
+  slotProps = {},
   onchange,
   ...rest
 }: Props = $props();
+
+const controlled = value !== undefined;
 
 const field = createOtpInput(
   () =>
     ({
       ...(options as object),
       length: Number(length),
-      ...(value !== "" ? { value } : {}),
+      ...(controlled ? { value } : {}),
       onValueChange: (change) => {
         value = change.value;
         onchange?.(change);
@@ -42,7 +46,7 @@ const indexes = $derived(
 
 <div use:otpGroupAction={field} {...field.getGroupProps()} {...rest}>
   {#each indexes as index (index)}
-    <input {...field.getSlotProps(index)} />
+    <input {...field.getSlotProps(index)} {...(slotProps[index] ?? {})} />
   {/each}
   <input {...field.getHiddenInputProps()} />
 </div>

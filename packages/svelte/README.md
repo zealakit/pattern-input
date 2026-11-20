@@ -4,10 +4,10 @@
 
 ![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
 
-Headless number, masked, and one-time-code behavior for Svelte 5. Actions, store-shaped factories, and thin components share one prop-getter contract; the package ships no styles and never replaces a plain-text input.
+Factories, actions, and components for number, masked, and one-time-code fields in Svelte 5.
 
 > **Note**
-> This package is a skeleton in `1.0.0-beta.1`. It exports nothing yet: actions, factories, and components land in plan 11. The prop-getter contract is described in the root README and the repository skill.
+> This package ships no CSS, no classes and no validation engine. It attaches behavior to elements you own; you keep full control of styling and rules.
 
 ## Install
 
@@ -15,10 +15,32 @@ Headless number, masked, and one-time-code behavior for Svelte 5. Actions, store
 npm i @zealakit/pattern-input-svelte
 ```
 
-## Status
+## API
 
-- Package: buildable, typed, SSR-safe, and packed with the internal core bundled in.
-- Behavior: none yet; no API is exported before it is implemented.
+The same three fields share one contract. Swap `createNumberInput` for `createMaskedInput` or `createOtpInput` (and the hook/composable equivalent).
+
+```ts
+import { createNumberInput } from "@zealakit/pattern-input-svelte";
+
+const field = createNumberInput(() => ({ maximumFractionDigits: 2 }));
+
+<input {...field.getInputProps()} use:fieldAction={field} />;
+
+field.value(); field.formattedValue(); field.status();
+field.setValue(99); field.clear(); field.undo(); field.redo();
+```
+
+## Contract
+
+Every field exposes `value`, `formattedValue`, and `status`, plus `setValue`, `clear`, `focus`, `undo`, and `redo`. Getters are named `getInputProps` for number and masked, and `getGroupProps` / `getSlotProps` / `getHiddenInputProps` for OTP. `CONTRACT_VERSION` is exported from the package.
+
+## Behavior
+
+- Caret and selection survive formatting, editing, and paste.\n- Paste is parsed by the field; literals and separators are handled.\n- IME composition commits once, after `compositionend`.\n- Controlled and uncontrolled modes are both supported.\n- Undo/redo restore value and caret.\n- ARIA: `aria-invalid` only for real invalid state.
+
+## Non-goals
+
+- No default styles, themes, or class names.\n- No bundled schema validation (consumer callbacks only).\n- No wrapping or replacing plain-text inputs.\n- No date pickers, currency conversion, phone metadata, or network calls.
 
 ## License
 

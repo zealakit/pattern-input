@@ -12,18 +12,15 @@ type Props = {
   [key: string]: unknown;
 };
 
-let {
-  value = $bindable(""),
-  options = {},
-  onchange,
-  ...rest
-}: Props = $props();
+let { value = $bindable(), options = {}, onchange, ...rest }: Props = $props();
+
+const controlled = value !== undefined;
 
 const field = createMaskedInput(
   () =>
     ({
       ...(options as object),
-      ...(value !== "" ? { value } : {}),
+      ...(controlled ? { value } : {}),
       onValueChange: (change) => {
         value = change.value;
         onchange?.(change);
@@ -34,10 +31,16 @@ const field = createMaskedInput(
 $effect.pre(() => {
   field.sync();
 });
+
+// Render the initial text as a value attribute only on the server; on the
+// client the DOM binding owns `el.value` (D5).
+const serverValue = $derived(
+  typeof window === "undefined" ? { value: field.formattedValue() } : {},
+);
 </script>
 
 <input
   use:fieldAction={field}
   {...field.getInputProps(rest)}
-  value={typeof window === "undefined" ? field.formattedValue() : undefined}
+  {...serverValue}
 />
