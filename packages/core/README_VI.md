@@ -2,7 +2,7 @@
 
 [English](https://github.com/zealakit/pattern-input/blob/main/packages/core/README.md) | [Tiếng Việt](https://github.com/zealakit/pattern-input/blob/main/packages/core/README_VI.md) | [中文](https://github.com/zealakit/pattern-input/blob/main/packages/core/README_CN.md)
 
-![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
+![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg)
 
 Kernel nội bộ, độc lập framework của Pattern Input. Private và không publish: được đóng gói vào mọi tarball adapter dưới `dist/vendor/core/`. Expose hai entry — bề mặt `.` thuần và DOM binding tại `./dom`.
 

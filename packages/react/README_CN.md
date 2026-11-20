@@ -2,7 +2,7 @@
 
 [English](https://github.com/zealakit/pattern-input/blob/main/packages/react/README.md) | [Tiếng Việt](https://github.com/zealakit/pattern-input/blob/main/packages/react/README_VI.md) | [中文](https://github.com/zealakit/pattern-input/blob/main/packages/react/README_CN.md)
 
-![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
+![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg)
 
 React 18 与 19 的 number、masked 与一次性验证码 hook 与轻量组件。
 

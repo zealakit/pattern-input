@@ -2,7 +2,7 @@
 
 [English](https://github.com/zealakit/pattern-input/blob/main/README.md) | [Tiếng Việt](https://github.com/zealakit/pattern-input/blob/main/README_VI.md) | [中文](https://github.com/zealakit/pattern-input/blob/main/README_CN.md)
 
-![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
+![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg)
 
 Các primitive hành vi headless cho input number, masked và one-time-code bằng Vanilla TypeScript, React, Vue và Svelte.
 

@@ -1,7 +1,7 @@
 {
   "name": "@zealakit/pattern-input-svelte",
   "version": "1.0.0-beta.1",
-  "description": "Headless, framework-agnostic behavioral primitives for number, masked, and one-time-code input fields for Svelte.",
+  "description": "Headless, framework-agnostic behavioral primitives for specialized input fields for Svelte.",
   "keywords": [
     "number-input",
     "masked-input",

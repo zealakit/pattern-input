@@ -2,7 +2,7 @@
 
 [English](https://github.com/zealakit/pattern-input/blob/main/packages/core/README.md) | [Tiếng Việt](https://github.com/zealakit/pattern-input/blob/main/packages/core/README_VI.md) | [中文](https://github.com/zealakit/pattern-input/blob/main/packages/core/README_CN.md)
 
-![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
+![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg)
 
 Internal framework-independent kernel for Pattern Input. Private and never published: it is bundled into every adapter tarball as `dist/vendor/core/`. It exposes two entries — the pure `.` surface and the DOM binding at `./dom`.
 
