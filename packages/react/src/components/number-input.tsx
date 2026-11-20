@@ -6,10 +6,7 @@ import {
 } from "../hooks/use-number-input.js";
 
 export type NumberInputComponentProps = NumberInputOptions & {
-  readonly inputProps?: Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    "value" | "defaultValue"
-  >;
+  readonly inputProps?: Record<string, unknown>;
 };
 
 /** Thin component rendering only the field's own `<input>`. */

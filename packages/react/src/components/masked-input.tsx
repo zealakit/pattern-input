@@ -6,10 +6,7 @@ import {
 } from "../hooks/use-masked-input.js";
 
 export type MaskedInputComponentProps = MaskedInputOptions & {
-  readonly inputProps?: Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    "value" | "defaultValue"
-  >;
+  readonly inputProps?: Record<string, unknown>;
 };
 
 /** Thin component rendering only the field's own `<input>`. */

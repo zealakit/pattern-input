@@ -2,11 +2,8 @@ import type { HTMLAttributes, InputHTMLAttributes } from "react";
 import { useOtpInput, type OtpInputOptions } from "../hooks/use-otp-input.js";
 
 export type OtpInputComponentProps = OtpInputOptions & {
-  readonly groupProps?: HTMLAttributes<HTMLDivElement>;
-  readonly slotProps?: Record<
-    number,
-    Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "defaultValue">
-  >;
+  readonly groupProps?: Record<string, unknown>;
+  readonly slotProps?: Record<number, Record<string, unknown>>;
 };
 
 /** Group wrapper + N slot inputs + hidden aggregate input. */
@@ -21,7 +18,7 @@ export function OtpInput({
   return (
     <div
       {...(field.getGroupProps() as HTMLAttributes<HTMLDivElement>)}
-      {...groupProps}
+      {...(groupProps as HTMLAttributes<HTMLDivElement>)}
     >
       {Array.from({ length }, (_, index) => (
         <input
@@ -29,7 +26,8 @@ export function OtpInput({
           {...(field.getSlotProps(
             index,
           ) as InputHTMLAttributes<HTMLInputElement>)}
-          {...(slotProps?.[index] ?? {})}
+          {...((slotProps?.[index] ??
+            {}) as InputHTMLAttributes<HTMLInputElement>)}
         />
       ))}
       <input
