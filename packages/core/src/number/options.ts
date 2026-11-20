@@ -70,10 +70,26 @@ export class NumberOptionsError extends Error {
 const DEFAULT_SEPARATORS = { decimal: ".", group: "," } as const;
 const cache = new WeakMap<NumberOptions, ResolvedNumberOptions>();
 
-function separatorsFromLocale(locale: string): {
-  decimal: string;
-  group: string;
-} {
+type Separators = { readonly decimal: string; readonly group: string };
+
+const MAX_LOCALE_CACHE = 64;
+const localeCache = new Map<string, Separators>();
+
+/** Resolve (and memoize) a locale's separators; `Intl` is slow to construct. */
+function separatorsFromLocale(locale: string): Separators {
+  const cached = localeCache.get(locale);
+  if (cached) {
+    return cached;
+  }
+  const separators = readSeparators(locale);
+  if (localeCache.size >= MAX_LOCALE_CACHE) {
+    localeCache.clear();
+  }
+  localeCache.set(locale, separators);
+  return separators;
+}
+
+function readSeparators(locale: string): Separators {
   try {
     const parts = new Intl.NumberFormat(locale).formatToParts(1234567.5);
     let decimal: string = DEFAULT_SEPARATORS.decimal;
@@ -87,7 +103,7 @@ function separatorsFromLocale(locale: string): {
     }
     return { decimal, group };
   } catch {
-    return { ...DEFAULT_SEPARATORS };
+    return DEFAULT_SEPARATORS;
   }
 }
 

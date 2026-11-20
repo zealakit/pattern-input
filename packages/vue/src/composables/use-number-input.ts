@@ -1,4 +1,4 @@
-import { toValue, type MaybeRefOrGetter } from "vue";
+import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import {
   createNumberController,
   getNumberInputProps,
@@ -15,6 +15,9 @@ export function useNumberInput(options: MaybeRefOrGetter<NumberInputOptions>) {
     options,
   );
   const { inputRef, getElement } = useInputElement(controller);
+  const resolved = computed(() =>
+    resolveNumberOptions(toValue(options) as unknown as NumberOptions),
+  );
 
   return {
     state,
@@ -23,10 +26,7 @@ export function useNumberInput(options: MaybeRefOrGetter<NumberInputOptions>) {
     status: () => controller.status,
     inputRef,
     getInputProps(extra: Record<string, unknown> = {}) {
-      const resolved = resolveNumberOptions(
-        toValue(options) as unknown as NumberOptions,
-      );
-      return { ...getNumberInputProps(state.value, resolved), ...extra };
+      return { ...getNumberInputProps(state.value, resolved.value), ...extra };
     },
     setValue: (value: number | null) => controller.setValue(value),
     clear: () => controller.clear(),

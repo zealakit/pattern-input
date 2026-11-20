@@ -1,4 +1,4 @@
-import type { BaseFieldEvent } from "../shared/index.js";
+import { type BaseFieldEvent, MAX_INPUT_CHARS } from "../shared/index.js";
 import type { ResolvedOtpOptions } from "./options.js";
 import {
   buildOtpState,
@@ -62,7 +62,7 @@ function applyPaste(
   startIndex: number,
   resolved: ResolvedOtpOptions,
 ): OtpState {
-  const chars = [...text]
+  const chars = [...text.slice(0, MAX_INPUT_CHARS)]
     .map((char) => normalizeOtpChar(char, resolved))
     .filter((char): char is string => char !== null);
   if (chars.length === 0) {
@@ -134,8 +134,7 @@ export function otpReducer(
 
   switch (event.type) {
     case "insert": {
-      const chars = [...event.text];
-      if (chars.length > 1) {
+      if ([...event.text.slice(0, MAX_INPUT_CHARS)].length > 1) {
         return applyPaste(state, event.text, state.activeIndex, resolved);
       }
       const char = normalizeOtpChar(event.text, resolved);
@@ -234,7 +233,7 @@ export function otpReducer(
     case "setValue": {
       const distributed = distributeSlots(
         emptySlots(resolved.length),
-        [...event.value]
+        [...event.value.slice(0, MAX_INPUT_CHARS)]
           .map((char) => normalizeOtpChar(char, resolved))
           .filter((char): char is string => char !== null)
           .join(""),
@@ -275,9 +274,13 @@ export function otpReducer(
       if (event.text === "") {
         return cleared;
       }
-      return [...event.text].length > 1
-        ? applyPaste(cleared, event.text, index, resolved)
-        : writeSlot(cleared, index, event.text, resolved);
+      if ([...event.text.slice(0, MAX_INPUT_CHARS)].length > 1) {
+        return applyPaste(cleared, event.text, index, resolved);
+      }
+      const char = normalizeOtpChar(event.text, resolved);
+      return char === null
+        ? cleared
+        : writeSlot(cleared, index, char, resolved);
     }
   }
 }

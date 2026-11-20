@@ -1,4 +1,3 @@
-import { toValue, type MaybeRefOrGetter } from "vue";
 import {
   createOtpController,
   getOtpGroupProps,
@@ -6,8 +5,11 @@ import {
   getOtpSlotProps,
   resolveOtpOptions,
 } from "@zealakit/pattern-input-core";
-import { attachOtpGroup } from "@zealakit/pattern-input-core/dom";
-import { onScopeDispose } from "vue";
+import {
+  attachOtpGroup,
+  createOtpSlotRegistry,
+} from "@zealakit/pattern-input-core/dom";
+import { computed, type MaybeRefOrGetter, onScopeDispose, toValue } from "vue";
 import { useFieldController } from "./use-field-controller.js";
 
 export type OtpInputOptions = Parameters<typeof createOtpController>[0];
@@ -17,49 +19,17 @@ export function useOtpInput(options: MaybeRefOrGetter<OtpInputOptions>) {
     () => createOtpController(toValue(options)),
     options,
   );
+  const resolved = computed(() => resolveOtpOptions(toValue(options)));
 
-  const slots = new Map<number, HTMLInputElement>();
-  let group: HTMLElement | null = null;
+  const registry = createOtpSlotRegistry();
   let detach: (() => void) | null = null;
-
-  const getSlots = (): HTMLInputElement[] =>
-    Array.from(slots.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([, element]) => element);
 
   const groupRef = (element: HTMLElement | null): void => {
     detach?.();
     detach = null;
-    group = element;
-    if (element) {
-      detach = attachOtpGroup(element, controller, getSlots);
+    if (element !== null) {
+      detach = attachOtpGroup(element, controller, registry);
     }
-  };
-
-  const slotRefs = new Map<
-    number,
-    (element: HTMLInputElement | null) => void
-  >();
-  const slotRef = (
-    index: number,
-  ): ((element: HTMLInputElement | null) => void) => {
-    const existing = slotRefs.get(index);
-    if (existing) {
-      return existing;
-    }
-    const ref = (element: HTMLInputElement | null): void => {
-      if (element) {
-        slots.set(index, element);
-      } else {
-        slots.delete(index);
-      }
-      if (group) {
-        const attached = detach as unknown as { refresh?: () => void } | null;
-        attached?.refresh?.();
-      }
-    };
-    slotRefs.set(index, ref);
-    return ref;
   };
 
   onScopeDispose(() => {
@@ -73,16 +43,21 @@ export function useOtpInput(options: MaybeRefOrGetter<OtpInputOptions>) {
     formattedValue: () => controller.formattedValue,
     status: () => controller.status,
     groupRef,
-    slotRef,
-    getGroupProps: () =>
-      getOtpGroupProps(state.value, resolveOtpOptions(toValue(options))),
+    /** Stable, idempotent function ref for slot `index`. */
+    slotRef: registry.refFor,
+    getGroupProps: () => getOtpGroupProps(state.value, resolved.value),
     getSlotProps: (index: number) =>
-      getOtpSlotProps(state.value, resolveOtpOptions(toValue(options)), index),
+      getOtpSlotProps(state.value, resolved.value, index),
     getHiddenInputProps: () =>
-      getOtpHiddenInputProps(state.value, resolveOtpOptions(toValue(options))),
+      getOtpHiddenInputProps(state.value, resolved.value),
     setValue: (value: string) => controller.setValue(value),
     clear: () => controller.clear(),
-    focus: () => getSlots()[controller.getState().activeIndex]?.focus(),
+    focus: () => {
+      const slots = registry.getSlots();
+      const target =
+        slots[controller.getState().activeIndex] ?? slots.find(Boolean);
+      target?.focus();
+    },
     undo: () => controller.undo(),
     redo: () => controller.redo(),
   };

@@ -17,7 +17,10 @@ type AnyField = {
   setValue(value: unknown): void;
   attach(node: HTMLElement): () => void;
   setOptions(options: object): void;
+  readonly registry?: { refFor(index: number): SlotRef };
 };
+
+type SlotRef = (element: HTMLInputElement | null) => void;
 
 function fireBeforeInput(
   target: HTMLElement,
@@ -113,6 +116,7 @@ export function runVectorWithSvelte(vector: Vector): void {
       const slot = document.createElement("input");
       group.append(slot);
       slots.push(slot);
+      field.registry?.refFor(index)(slot);
     }
     document.body.append(group);
     detach = field.attach(group);

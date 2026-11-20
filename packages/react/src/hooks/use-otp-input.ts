@@ -1,4 +1,3 @@
-import { useCallback, useMemo, useRef } from "react";
 import {
   createOtpController,
   type FieldControllerOptions,
@@ -15,8 +14,11 @@ import {
 } from "@zealakit/pattern-input-core";
 import {
   attachOtpGroup,
+  createOtpSlotRegistry,
   type OtpDetach,
+  type OtpSlotRef,
 } from "@zealakit/pattern-input-core/dom";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFieldController } from "./use-field-controller.js";
 
 export type OtpInputOptions = FieldControllerOptions<string, OtpOptions>;
@@ -26,8 +28,12 @@ export type OtpFieldResult = {
   readonly formattedValue: string;
   readonly status: FieldStatus;
   readonly controlled: boolean;
-  getGroupProps(): Record<string, unknown>;
-  getSlotProps(index: number): Record<string, unknown>;
+  getGroupProps(): Record<string, unknown> & {
+    readonly ref: (element: HTMLElement | null) => void;
+  };
+  getSlotProps(index: number): Record<string, unknown> & {
+    readonly ref: OtpSlotRef;
+  };
   getHiddenInputProps(): Record<string, unknown>;
   setValue(value: string): void;
   clear(): void;
@@ -36,53 +42,31 @@ export type OtpFieldResult = {
   redo(): boolean;
 };
 
-export function useOtpInput(initialOptions: OtpInputOptions): OtpFieldResult {
+export function useOtpInput(options: OtpInputOptions): OtpFieldResult {
   const { controller, state } = useFieldController(
-    () => createOtpController(initialOptions),
-    initialOptions,
+    () => createOtpController(options),
+    options,
   );
-  const resolved = useMemo(
-    () => resolveOtpOptions(initialOptions),
-    [initialOptions],
-  );
+  const resolved = useMemo(() => resolveOtpOptions(options), [options]);
 
-  const groupRef = useRef<HTMLElement | null>(null);
-  const hiddenRef = useRef<HTMLInputElement | null>(null);
-  const slotsRef = useRef(new Map<number, HTMLInputElement>());
-  const attachedRef = useRef<OtpDetach | null>(null);
+  const [registry] = useState(createOtpSlotRegistry);
+  const detachRef = useRef<OtpDetach | null>(null);
+  // Initial characters only: they feed SSR/hydration. After mount the DOM
+  // binding is the sole writer of slot values (it must never be fought by a
+  // reactive `value` prop).
+  const initialSlots = useRef(state.slots).current;
 
-  const getSlots = useCallback(
-    () =>
-      Array.from(slotsRef.current.entries())
-        .sort(([a], [b]) => a - b)
-        .map(([, element]) => element),
-    [],
-  );
-
-  const attachGroup = useCallback(
+  // Child refs run before the parent's, so every mounted slot is registered by
+  // the time the group attaches; later slot changes arrive via the registry.
+  const groupRef = useCallback(
     (element: HTMLElement | null) => {
-      attachedRef.current?.();
-      attachedRef.current = null;
-      groupRef.current = element;
-      if (element) {
-        attachedRef.current = attachOtpGroup(element, controller, getSlots, {
-          hiddenInput: hiddenRef.current ?? undefined,
-        });
+      detachRef.current?.();
+      detachRef.current = null;
+      if (element !== null) {
+        detachRef.current = attachOtpGroup(element, controller, registry);
       }
     },
-    [controller, getSlots],
-  );
-
-  const slotRef = useCallback(
-    (index: number) => (element: HTMLInputElement | null) => {
-      if (element) {
-        slotsRef.current.set(index, element);
-      } else {
-        slotsRef.current.delete(index);
-      }
-      attachedRef.current?.refresh();
-    },
-    [],
+    [controller, registry],
   );
 
   return {
@@ -92,36 +76,19 @@ export function useOtpInput(initialOptions: OtpInputOptions): OtpFieldResult {
     controlled: controller.controlled,
     getGroupProps() {
       return {
-        ...toReactProps(
-          getOtpGroupProps(state, resolved) as unknown as Record<
-            string,
-            unknown
-          >,
-        ),
-        ref: attachGroup,
+        ...toReactProps(getOtpGroupProps(state, resolved)),
+        ref: groupRef,
       };
     },
-    getSlotProps(index: number) {
-      const props = toReactProps(
-        getOtpSlotProps(state, resolved, index) as unknown as Record<
-          string,
-          unknown
-        >,
-      );
-      return { ...props, ref: slotRef(index) };
+    getSlotProps(index) {
+      return {
+        ...toReactProps(getOtpSlotProps(state, resolved, index)),
+        defaultValue: initialSlots[index] ?? "",
+        ref: registry.refFor(index),
+      };
     },
     getHiddenInputProps() {
-      return {
-        ...toReactProps(
-          getOtpHiddenInputProps(state, resolved) as unknown as Record<
-            string,
-            unknown
-          >,
-        ),
-        ref: (element: HTMLInputElement | null) => {
-          hiddenRef.current = element;
-        },
-      };
+      return toReactProps(getOtpHiddenInputProps(state, resolved));
     },
     setValue(value) {
       controller.setValue(value);
@@ -130,8 +97,10 @@ export function useOtpInput(initialOptions: OtpInputOptions): OtpFieldResult {
       controller.clear();
     },
     focus() {
-      const slots = getSlots();
-      (slots[controller.getState().activeIndex] ?? slots[0])?.focus();
+      const slots = registry.getSlots();
+      const target =
+        slots[controller.getState().activeIndex] ?? slots.find(Boolean);
+      target?.focus();
     },
     undo() {
       return controller.undo();
@@ -142,4 +111,4 @@ export function useOtpInput(initialOptions: OtpInputOptions): OtpFieldResult {
   };
 }
 
-export type { OtpGroupProps, OtpHiddenInputProps, OtpSlotProps, OtpOptions };
+export type { OtpGroupProps, OtpHiddenInputProps, OtpOptions, OtpSlotProps };

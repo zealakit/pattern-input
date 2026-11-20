@@ -29,3 +29,4 @@ export {
 } from "./sticky.js";
 export type { KeyPlatform } from "./keys.js";
 export { isComposing, isModified, isWordDelete } from "./keys.js";
+export { MAX_INPUT_CHARS } from "./limits.js";

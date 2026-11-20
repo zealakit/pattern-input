@@ -9,6 +9,7 @@ import {
 import {
   caret,
   type BaseFieldEvent,
+  MAX_INPUT_CHARS,
   moveCaret,
   selectedRange,
 } from "../shared/index.js";
@@ -192,7 +193,7 @@ function applyPaste(
   resolved: ResolvedMaskedOptions,
 ): MaskedState {
   const alternative = currentAlternative(state, resolved);
-  const extracted = extractRaw(resolved.mask, text);
+  const extracted = extractRaw(resolved.mask, text.slice(0, MAX_INPUT_CHARS));
   if (extracted === "") {
     return state;
   }
@@ -230,7 +231,7 @@ function applySetValue(
   resolved: ResolvedMaskedOptions,
 ): MaskedState {
   const alternative = currentAlternative(state, resolved);
-  const extracted = extractRaw(resolved.mask, value);
+  const extracted = extractRaw(resolved.mask, value.slice(0, MAX_INPUT_CHARS));
   let raw = "";
   let cursor = 0;
 

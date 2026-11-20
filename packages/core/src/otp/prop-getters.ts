@@ -1,4 +1,4 @@
-import type { ResolvedOtpOptions } from "./options.js";
+import { OtpOptionsError, type ResolvedOtpOptions } from "./options.js";
 import type { OtpState } from "./state.js";
 
 export type OtpGroupProps = {
@@ -14,7 +14,7 @@ export type OtpSlotProps = {
   readonly type: "text";
   readonly inputmode: "numeric" | "text";
   readonly pattern?: string;
-  readonly autocomplete: "one-time-code" | "off" | "one-time-code" | "off";
+  readonly autocomplete: "one-time-code" | "off";
   readonly maxlength: number;
   readonly "aria-label": string;
   readonly tabindex: 0 | -1;
@@ -64,6 +64,9 @@ export function getOtpSlotProps(
   resolved: ResolvedOtpOptions,
   index: number,
 ): OtpSlotProps {
+  if (!Number.isInteger(index) || index < 0 || index >= resolved.length) {
+    throw new OtpOptionsError("slotIndex");
+  }
   const numeric = resolved.type === "numeric";
   return {
     type: "text",

@@ -1,3 +1,8 @@
+import type {
+  FieldController,
+  FieldControllerOptions,
+} from "@zealakit/pattern-input-core";
+import { attachInput } from "@zealakit/pattern-input-core/dom";
 import {
   computed,
   type ComputedRef,
@@ -7,12 +12,8 @@ import {
   watch,
   type MaybeRefOrGetter,
 } from "vue";
-import type {
-  FieldController,
-  FieldControllerOptions,
-} from "@zealakit/pattern-input-core";
 
-/** Create a controller once, push options synchrnously, expose shallow state. */
+/** Create a controller once, push options synchronously, expose shallow state. */
 export function useFieldController<
   TState,
   TEvent extends { readonly type: string },
@@ -78,5 +79,3 @@ export function useInputElement<
 
   return { inputRef, getElement: () => element };
 }
-
-import { attachInput } from "@zealakit/pattern-input-core/dom";

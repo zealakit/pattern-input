@@ -15,7 +15,6 @@ import {
   useElementBinding,
   useFieldController,
 } from "./use-field-controller.js";
-import { composeRefs } from "../utils/merge-props.js";
 
 export type MaskedInputOptions = FieldControllerOptions<string, MaskedOptions>;
 
@@ -47,7 +46,7 @@ export function useMaskedInput(
     () => resolveMaskedOptions(initialOptions),
     [initialOptions],
   );
-  const { ref, elementRef } = useElementBinding(controller, attachInput);
+  const { refWith, elementRef } = useElementBinding(controller, attachInput);
   const initialFormatted = useRef(state.formattedValue).current;
 
   return {
@@ -64,7 +63,7 @@ export function useMaskedInput(
         ...base,
         defaultValue: initialFormatted,
         ...rest,
-        ref: composeRefs(ref, userRef),
+        ref: refWith(userRef),
       };
     },
     setValue(value) {

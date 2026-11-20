@@ -200,3 +200,30 @@ test("NFR-3: 1000 reduces on a 20-slot OTP stay under 1 ms each", () => {
     `average reduce took ${(elapsed / 1000).toFixed(3)} ms`,
   );
 });
+
+test("otp: composeEnd rejects a character the slot type does not accept", () => {
+  const field = otp({ length: 4 });
+  field.send({ type: "composeStart" });
+  field.send({ type: "composeUpdate", text: "a" });
+  field.send({ type: "composeEnd", text: "a" });
+
+  assert.equal(field.state.rawValue, "");
+  assert.equal(field.state.composing, null);
+});
+
+test("otp: oversized paste payloads are bounded", () => {
+  const field = otp({ length: 6 });
+  field.send({ type: "paste", text: `${"x".repeat(100_000)}123456` });
+
+  assert.equal(field.state.rawValue, "");
+});
+
+test("otp: getSlotProps rejects an out-of-range slot index", () => {
+  const options = { length: 4 };
+  const resolved = resolveOtpOptions(options);
+  const state = createOtpState(options);
+
+  assert.throws(() => getOtpSlotProps(state, resolved, 4));
+  assert.throws(() => getOtpSlotProps(state, resolved, -1));
+  assert.throws(() => getOtpSlotProps(state, resolved, 1.5));
+});

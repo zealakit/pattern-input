@@ -2,7 +2,10 @@ import { createApp, h, ref, defineComponent } from "vue";
 import {
   MaskedInput,
   NumberInput,
-  OtpInput,
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
   useNumberInput,
   useMaskedInput,
 } from "@zealakit/pattern-input-vue";
@@ -83,22 +86,32 @@ const App = defineComponent({
           inputProps: { id: "phone", "data-testid": "phone" },
         }),
         h("label", { for: "code-0" }, "Verification code"),
-        h(OtpInput, {
-          length: 6,
-          options: { name: "code" },
-          groupProps: {
+        h(
+          InputOTP,
+          {
+            maxLength: 6,
+            name: "code",
+            label: "Verification code",
             "data-testid": "code",
-            "aria-label": "Verification code",
           },
-          slotProps: {
-            0: { id: "code-0", "data-testid": "code-slot-0" },
-            1: { "data-testid": "code-slot-1" },
-            2: { "data-testid": "code-slot-2" },
-            3: { "data-testid": "code-slot-3" },
-            4: { "data-testid": "code-slot-4" },
-            5: { "data-testid": "code-slot-5" },
-          },
-        }),
+          () => [
+            h(InputOTPGroup, null, () => [
+              h(InputOTPSlot, {
+                index: 0,
+                id: "code-0",
+                "data-testid": "code-slot-0",
+              }),
+              h(InputOTPSlot, { index: 1, "data-testid": "code-slot-1" }),
+              h(InputOTPSlot, { index: 2, "data-testid": "code-slot-2" }),
+            ]),
+            h(InputOTPSeparator, { "data-testid": "code-sep" }, () => "-"),
+            h(InputOTPGroup, null, () => [
+              h(InputOTPSlot, { index: 3, "data-testid": "code-slot-3" }),
+              h(InputOTPSlot, { index: 4, "data-testid": "code-slot-4" }),
+              h(InputOTPSlot, { index: 5, "data-testid": "code-slot-5" }),
+            ]),
+          ],
+        ),
         h("label", { for: "controlled" }, "Controlled price (max 1000)"),
         h(ControlledPrice),
         h("label", { for: "invalid" }, "Invalid field"),

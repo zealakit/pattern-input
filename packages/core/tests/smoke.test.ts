@@ -63,6 +63,7 @@ test("core dom entry imports without touching the document", async () => {
   assert.deepEqual(Object.keys(module).sort(), [
     "attachInput",
     "attachOtpGroup",
+    "createOtpSlotRegistry",
     "isBrowser",
     "mapInputType",
     "platform",

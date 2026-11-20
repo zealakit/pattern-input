@@ -1,10 +1,7 @@
 import { test } from "node:test";
 
-/**
- * The adapter ships no behavior yet (plan 09 adds hooks and components), so the
- * built entry must stay empty and must import cleanly with a DOM present.
- */
-test("react entry imports under happy-dom and exports nothing", async () => {
+/** The built entry exports exactly the documented surface and imports cleanly. */
+test("react entry imports under happy-dom and exports the documented surface", async () => {
   const entry = new URL("../dist/index.js", import.meta.url).href;
   const module = await import(entry);
 
@@ -13,9 +10,12 @@ test("react entry imports under happy-dom and exports nothing", async () => {
     "CONTRACT_VERSION",
     "GETTER_NAMES",
     "INSTANCE_API",
+    "InputOTP",
+    "InputOTPGroup",
+    "InputOTPSeparator",
+    "InputOTPSlot",
     "MaskedInput",
     "NumberInput",
-    "OtpInput",
     "PatternInputError",
     "useMaskedInput",
     "useNumberInput",

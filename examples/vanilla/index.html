@@ -43,12 +43,17 @@
     <form id="form" class="row">
       <label for="code-0">Verification code</label>
       <div id="code" data-testid="code" role="group" aria-label="Verification code">
-        <input id="code-0" data-testid="code-slot-0" />
-        <input data-testid="code-slot-1" />
-        <input data-testid="code-slot-2" />
-        <input data-testid="code-slot-3" />
-        <input data-testid="code-slot-4" />
-        <input data-testid="code-slot-5" />
+        <span>
+          <input id="code-0" data-testid="code-slot-0" />
+          <input data-testid="code-slot-1" />
+          <input data-testid="code-slot-2" />
+        </span>
+        <span data-testid="code-sep" aria-hidden="true">-</span>
+        <span>
+          <input data-testid="code-slot-3" />
+          <input data-testid="code-slot-4" />
+          <input data-testid="code-slot-5" />
+        </span>
       </div>
       <small>Paste a six-digit code into the first slot.</small>
       <button type="submit">Submit</button>

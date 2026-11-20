@@ -8,6 +8,7 @@ import {
 import {
   caret,
   type BaseFieldEvent,
+  MAX_INPUT_CHARS,
   moveCaret,
   selectedRange,
 } from "../shared/index.js";
@@ -195,10 +196,12 @@ function applyDelete(
   });
 }
 
+const PASTE_CHAR = /[0-9.,+\-−\s]/;
+
 function keepPasteChars(text: string, resolved: ResolvedNumberOptions): string {
   const kept = [...text].filter(
     (char) =>
-      /[0-9.,+\-−\s]/.test(char) ||
+      PASTE_CHAR.test(char) ||
       char === resolved.decimalSeparator ||
       char === resolved.groupSeparator,
   );
@@ -210,6 +213,10 @@ function applyPaste(
   text: string,
   resolved: ResolvedNumberOptions,
 ): NumberState {
+  // No valid number is this long; refuse instead of scanning hostile input.
+  if (text.length > MAX_INPUT_CHARS) {
+    return state;
+  }
   const cleaned = keepPasteChars(text, resolved);
   const attempts = [text, cleaned].filter(
     (value, index, all) => value !== "" && all.indexOf(value) === index,

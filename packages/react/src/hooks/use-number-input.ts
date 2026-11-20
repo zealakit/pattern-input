@@ -15,7 +15,6 @@ import {
   useElementBinding,
   useFieldController,
 } from "./use-field-controller.js";
-import { composeRefs } from "../utils/merge-props.js";
 
 export type NumberInputOptions = FieldControllerOptions<
   number | null,
@@ -50,7 +49,7 @@ export function useNumberInput(
     () => resolveNumberOptions(initialOptions),
     [initialOptions],
   );
-  const { ref, elementRef } = useElementBinding(controller, attachInput);
+  const { refWith, elementRef } = useElementBinding(controller, attachInput);
   const initialFormatted = useRef(state.formattedValue).current;
 
   return {
@@ -67,7 +66,7 @@ export function useNumberInput(
         ...base,
         defaultValue: initialFormatted,
         ...rest,
-        ref: composeRefs(ref, userRef),
+        ref: refWith(userRef),
       };
     },
     setValue(value) {

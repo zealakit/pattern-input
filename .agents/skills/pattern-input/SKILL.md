@@ -85,9 +85,19 @@ string.
 - After every handled event the binding repaints `el.value` and the selection under an `applying`
   guard, so its own synthetic events are ignored. Controlled mode always paints the approved
   state, so a rejected proposal is never shown (AC-7).
-- `attachOtpGroup(group, controller, getSlots, { hiddenInput? })` wires per-slot
-  beforeinput/input/paste/key/focus, keeps roving `tabindex`, moves focus to `activeIndex`, keeps
-  the hidden input in sync, and exposes `refresh()` so adapters can re-query slots after render.
+- `attachOtpGroup(group, controller, source, { hiddenInput? })` wires per-slot
+  beforeinput/input/composition/paste/key/focus, keeps roving `tabindex`, moves focus to
+  `activeIndex`, and keeps the hidden input in sync. `source` is an `OtpSlotRegistry` (preferred:
+  it refreshes itself when slots register) or a `() => OtpSlotList` getter plus `refresh()`.
+  Slots are addressed by **index**, so they may sit in any DOM structure, mount in any order and
+  be sparse (`undefined` = not rendered; roving tabindex and focus fall back to the nearest
+  mounted slot). Inputs past the field length are host-owned and left alone.
+- `createOtpSlotRegistry()` is the one shared slot tracker: `register(index, el)` and a stable,
+  idempotent `refFor(index)` ref callback. Adapters wire it to framework refs/actions; do not
+  re-implement a Map-plus-sort per adapter. Idempotence matters: Vue re-invokes function refs on
+  every patch, and a transient "slot missing" state makes the group re-point focus in a loop.
+- While a composition is open the binding does not repaint (`el.value` belongs to the IME) —
+  for text fields and OTP slots alike.
 - SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
   `isBrowser()` is false.
 
@@ -100,10 +110,16 @@ components, built with `svelte-package`.
   create the controller once and expose a readable store (`subscribe`) plus `value()`,
   `formattedValue()`, `status()`, `getInputProps()` (or the OTP getters), `setValue`, `clear`,
   `focus`, `undo`, `redo`, `setOptions`, `sync()` and `attach(node)`.
-- `fieldAction` and `otpGroupAction` are Svelte actions: they attach the DOM binding and detach
-  on destroy. The OTP factory finds its slots with
-  `input:not([type="hidden"])` inside the group.
-- Components (`NumberInput`, `MaskedInput`, `OtpInput`) accept `bind:value`-friendly props and an
+- `fieldAction`, `otpGroupAction` and `otpSlotAction` are Svelte actions: they attach the DOM
+  binding and detach on destroy. `otpSlotAction` registers a slot input by index in the field's
+  registry (`use:otpSlotAction={{ field, index }}`).
+- The getters read controller state imperatively, so Svelte does not re-run them on its own:
+  components subscribe with `$field` / `fromStore(field)` inside `$derived.by` (aria-invalid,
+  aria-describedby, roving tabindex). Do the same in templates that call getters directly.
+- `InputOTP` is a compound component (`InputOTP.Group`, `.Slot`, `.Separator`; also exported by
+  name). The root sets context and renders the group plus the hidden input; slots read the field
+  from context.
+- Components (`NumberInput`, `MaskedInput`, `InputOTP`) accept `bind:value`-friendly props and an
   `onchange` callback with the full `ValueChange`; they call `field.sync()` in `$effect.pre` so
   option changes land before the DOM update. On the server only they render the initial formatted
   text as a `value` attribute.
@@ -122,11 +138,14 @@ components, built with `svelte-package`.
   `inputRef` is a function ref (attached on element, detached on `null` and on scope dispose).
 - `getInputProps()` returns DOM attribute names unchanged (Vue accepts them) and never binds
   `value`.
-- Components (`NumberInput`, `MaskedInput`, `OtpInput`) support `v-model`
+- Components (`NumberInput`, `MaskedInput`, `InputOTP`) support `v-model`
   (`modelValue` + `update:modelValue`) and emit `change` with the full `ValueChange`. On the
   server only, the component renders the initial formatted text as a `value` attribute.
-- `OtpInput` renders the group, N slots and the hidden aggregate input; slot refs are stable per
-  index so Vue patches do not detach/re-attach the binding.
+- `InputOTP` is a compound component (`InputOTP.Group`, `.Slot`, `.Separator`; also exported by
+  name; dot notation in templates needs `<script setup>`). The root provides the field and renders
+  the group plus the hidden input; slots inject it. `inheritAttrs: false` on root and slot so
+  behavior attributes win over fallthrough attrs. Slot refs come from `registry.refFor(index)`.
+- Resolved options are a `computed`, so getters do not re-resolve on every call.
 
 ## React adapter
 
@@ -139,10 +158,17 @@ components, built with `svelte-package`.
 - `getInputProps(extra?)` returns `toReactProps(...)` (camelCase), `defaultValue` with the initial
   formatted text, and a merged `ref` that attaches/detaches the DOM binding (StrictMode-safe).
   It **never** passes `value` (D5) — the DOM binding owns `el.value`.
-- OTP: `getGroupProps()` (includes the group ref), `getSlotProps(index)` (each with its ref and
-  `refresh()` wiring), `getHiddenInputProps()`.
-- `NumberInput`, `MaskedInput`, `OtpInput` render only the field's own elements; `OtpInput`
-  accepts `groupProps` and per-slot `slotProps` passthrough.
+- The ref returned by `getInputProps()` keeps its identity across renders (composed refs are
+  cached per consumer ref): a new callback ref makes React detach and re-attach the DOM binding on
+  every render. The ref alone owns attach/detach — no extra unmount effect, which would break
+  React 18 StrictMode (it re-runs effects but not refs).
+- OTP: `getGroupProps()` (includes the group ref), `getSlotProps(index)` (stable
+  `registry.refFor(index)` ref and an initial `defaultValue` for SSR), `getHiddenInputProps()`.
+- `NumberInput`, `MaskedInput` render only the field's own element. `InputOTP` is a compound
+  component: `<InputOTP maxLength>` with `InputOTP.Group`, `.Slot index`, `.Separator` (also
+  exported by name for Server Component boundaries). The root renders `role="group"` plus the
+  hidden input and forwards its ref; the field owns slot behavior attributes and lets the rest
+  (className, id, ref, data-*) pass through. Separators are `aria-hidden`, never `role=separator`.
 - Controlled without `onValueChange` throws during render, matching the core contract.
 
 ## Vanilla adapter
@@ -155,7 +181,7 @@ the DOM binding, with no element creation.
   `<input>` of type text/tel/search (default type qualifies), else `PatternInputError`
   `UNSUPPORTED_ELEMENT`. Without a DOM they throw `NO_DOM`.
 - Instances expose the contract names: `getInputProps()` (number/masked) or
-  `getGroupProps()`/`getSlotProps(i)`/`getHiddenInputProps()` (OTP), plus
+  `getGroupProps()`/`getSlotProps(i)`/`getHiddenInputProps()` (OTP; `slots` option may be sparse), plus
   `value`, `formattedValue`, `status`, `setValue`, `clear`, `focus`, `undo`, `redo`,
   `setOptions`, `subscribe`, `destroy` (OTP adds `refresh`). `setOptions` is how a controlled
   consumer approves a proposal.
@@ -361,3 +387,14 @@ selection; framework adapters never bind `value` reactively.
 No CSS/classes/themes; no validation engine; never wrap a plain-text input; no speculative
 exports; SSR-safe imports; IME commits once; core pure entry stays DOM-free; adapters never import
 other adapters; `type` aliases and `.js` specifiers; one commit per plan, no AI co-author trailer.
+
+## Hardening rules
+
+- Text from outside (paste, autofill, `setValue`) is capped at `MAX_INPUT_CHARS` before any
+  scanning; never add a code path that walks unbounded input.
+- Single-character slots must normalize every entry path, including `composeEnd`.
+- Controlled proposals are deduped against the **approved** value, not against the last emitted
+  one — otherwise a rejected proposal can never be proposed again.
+- Resolve expensive option parts once: locale separators are memoized; do not call `Intl` per
+  render.
+- Any new reactive adapter must prove that getters re-run when state changes (aria-invalid).

@@ -32,17 +32,44 @@ field.setValue(99); field.clear(); field.undo(); field.redo();
 field.destroy();
 ```
 
+## OTP layout
+
+Slots are inputs you own, in any structure. By default every non-hidden `<input>` inside the group is a slot, in DOM order; pass `slots` to choose them by index instead and leave an index `undefined` for a slot you do not render. Inputs past `length` are ignored.
+
+```ts
+import { createOtpInput } from "@zealakit/pattern-input-vanilla";
+
+const group = document.querySelector<HTMLElement>("#code")!;
+const otp = createOtpInput(group, { length: 6, name: "code" });
+
+otp.value;      // "123456"
+otp.status;     // empty | incomplete | complete | invalid
+otp.destroy();
+```
+
+The group gets `role="group"` and the slots get their behavior attributes. Render the hidden aggregate input yourself from `getHiddenInputProps()` (or pass it as `hiddenInput`) to submit the code with a form.
+
+Call `refresh()` after you add or remove slot elements.
+
 ## Contract
 
 Every field exposes `value`, `formattedValue`, and `status`, plus `setValue`, `clear`, `focus`, `undo`, and `redo`. Getters are named `getInputProps` for number and masked, and `getGroupProps` / `getSlotProps` / `getHiddenInputProps` for OTP. `CONTRACT_VERSION` is exported from the package.
 
 ## Behavior
 
-- Caret and selection survive formatting, editing, and paste.\n- Paste is parsed by the field; literals and separators are handled.\n- IME composition commits once, after `compositionend`.\n- Controlled and uncontrolled modes are both supported.\n- Undo/redo restore value and caret.\n- ARIA: `aria-invalid` only for real invalid state.
+- Caret and selection survive formatting, editing, and paste.
+- Paste is parsed by the field; literals and separators are handled.
+- IME composition commits once, after `compositionend`.
+- Controlled and uncontrolled modes are both supported.
+- Undo/redo restore value and caret.
+- ARIA: `aria-invalid` only for real invalid state.
 
 ## Non-goals
 
-- No default styles, themes, or class names.\n- No bundled schema validation (consumer callbacks only).\n- No wrapping or replacing plain-text inputs.\n- No date pickers, currency conversion, phone metadata, or network calls.
+- No default styles, themes, or class names.
+- No bundled schema validation (consumer callbacks only).
+- No wrapping or replacing plain-text inputs.
+- No date pickers, currency conversion, phone metadata, or network calls.
 
 ## License
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   MaskedInput,
   NumberInput,
-  OtpInput,
+  InputOTP,
   useMaskedInput,
   useNumberInput,
 } from "@zealakit/pattern-input-react";
@@ -70,22 +70,24 @@ export default function Home() {
       />
 
       <label htmlFor="code-0">Verification code</label>
-      <OtpInput
-        length={6}
+      <InputOTP
+        maxLength={6}
         name="code"
-        groupProps={{
-          "data-testid": "code",
-          "aria-label": "Verification code",
-        }}
-        slotProps={{
-          0: { id: "code-0", "data-testid": "code-slot-0" },
-          1: { "data-testid": "code-slot-1" },
-          2: { "data-testid": "code-slot-2" },
-          3: { "data-testid": "code-slot-3" },
-          4: { "data-testid": "code-slot-4" },
-          5: { "data-testid": "code-slot-5" },
-        }}
-      />
+        label="Verification code"
+        data-testid="code"
+      >
+        <InputOTP.Group>
+          <InputOTP.Slot index={0} id="code-0" data-testid="code-slot-0" />
+          <InputOTP.Slot index={1} data-testid="code-slot-1" />
+          <InputOTP.Slot index={2} data-testid="code-slot-2" />
+        </InputOTP.Group>
+        <InputOTP.Separator data-testid="code-sep">-</InputOTP.Separator>
+        <InputOTP.Group>
+          <InputOTP.Slot index={3} data-testid="code-slot-3" />
+          <InputOTP.Slot index={4} data-testid="code-slot-4" />
+          <InputOTP.Slot index={5} data-testid="code-slot-5" />
+        </InputOTP.Group>
+      </InputOTP>
 
       <label htmlFor="controlled">Controlled price (max 1000)</label>
       <ControlledPrice />

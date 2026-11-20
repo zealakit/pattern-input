@@ -40,5 +40,15 @@ export type { MaskedInputComponentProps } from "./components/masked-input.js";
 export { MaskedInput } from "./components/masked-input.js";
 export type { NumberInputComponentProps } from "./components/number-input.js";
 export { NumberInput } from "./components/number-input.js";
-export type { OtpInputComponentProps } from "./components/otp-input.js";
-export { OtpInput } from "./components/otp-input.js";
+export type {
+  InputOTPGroupProps,
+  InputOTPProps,
+  InputOTPSeparatorProps,
+  InputOTPSlotProps,
+} from "./components/otp-input.js";
+export {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "./components/otp-input.js";

@@ -193,3 +193,12 @@ test("number: no-op returns identical state reference", () => {
   number.send({ type: "delete", direction: "backward", unit: "char" });
   assert.equal(number.state, before);
 });
+
+test("number: an oversized paste is refused without scanning it", () => {
+  const f = field({});
+  f.send({ type: "paste", text: `${"9".repeat(5_000)}` });
+  assert.equal(f.state.rawText, "");
+
+  f.send({ type: "paste", text: "12" });
+  assert.equal(f.state.rawText, "12", "normal pastes still work");
+});

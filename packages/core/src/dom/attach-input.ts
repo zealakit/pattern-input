@@ -82,8 +82,13 @@ export function attachInput<
   };
 
   const render = (): void => {
-    paintInput(el, controller.getView(), guard);
-    lastText = controller.getView().text;
+    // While composing, the browser owns the text: repainting would destroy it.
+    if (composition.active) {
+      return;
+    }
+    const view = controller.getView();
+    paintInput(el, view, guard);
+    lastText = view.text;
   };
 
   const syncSelection = (): void => {
@@ -213,11 +218,14 @@ export function attachInput<
   };
 
   const onCut = (event: Event): void => {
-    const view = controller.getView();
-    const text = selectedText(view.text, view.map, view.selection);
+    syncSelection();
+    const selected = controller.getView();
+    const text = selectedText(selected.text, selected.map, selected.selection);
+    if (text === "") {
+      return;
+    }
     event.preventDefault();
     (event as ClipboardEvent).clipboardData?.setData("text/plain", text);
-    syncSelection();
     dispatch({ type: "delete", direction: "backward", unit: "char" });
     render();
   };
@@ -237,6 +245,8 @@ export function attachInput<
   };
 
   const onBlur = (): void => {
+    // A blur ends any open composition; the controller commits it on `blur`.
+    composition.end();
     dispatch({ type: "blur" });
     render();
   };

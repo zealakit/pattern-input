@@ -232,3 +232,11 @@ test("masked: getter is stable; numeric inputmode for all-digit masks", () => {
     "characters",
   );
 });
+
+test("masked: an oversized paste is bounded and still fills the mask", () => {
+  const field = masked({ mask: "999-99" });
+  field.send({ type: "paste", text: `12345${"x".repeat(100_000)}` });
+
+  assert.equal(field.state.rawValue, "12345");
+  assert.equal(field.state.formattedValue, "123-45");
+});

@@ -141,8 +141,6 @@ export function createFieldController<
     : options.defaultValue;
   let approved = binding.create(resolved, initialValue);
   let pending: { state: TState; reason: ChangeReason } | null = null;
-  let lastEmittedValue = binding.valueOf(approved);
-  let lastEmittedStatus = binding.statusOf(approved);
   let destroyed = false;
   let warned = false;
   let mergeAnchor: { offset: number; time: number } | null = null;
@@ -157,39 +155,19 @@ export function createFieldController<
     }
   }
 
-  function emit(reason: ChangeReason): void {
-    const value = binding.valueOf(approved);
-    const status = binding.statusOf(approved);
-    if (
-      binding.sameValue(value, lastEmittedValue) &&
-      status === lastEmittedStatus
-    ) {
-      return;
-    }
-    lastEmittedValue = value;
-    lastEmittedStatus = status;
-    options.onValueChange?.({
-      value,
-      formattedValue: binding.formattedValue(approved),
-      status,
-      reason,
-    });
-    options.onStatusChange?.(status);
+  /** True when `next` differs from `previous` in value or status. */
+  function changedFrom(previous: TState, next: TState): boolean {
+    return (
+      !binding.sameValue(binding.valueOf(next), binding.valueOf(previous)) ||
+      binding.statusOf(next) !== binding.statusOf(previous)
+    );
   }
 
-  function emitProposal(state: TState, reason: ChangeReason): void {
-    const value = binding.valueOf(state);
+  /** Report a value/status change (an approved state or a controlled proposal). */
+  function emit(state: TState, reason: ChangeReason): void {
     const status = binding.statusOf(state);
-    if (
-      binding.sameValue(value, lastEmittedValue) &&
-      status === lastEmittedStatus
-    ) {
-      return;
-    }
-    lastEmittedValue = value;
-    lastEmittedStatus = status;
     options.onValueChange?.({
-      value,
+      value: binding.valueOf(state),
       formattedValue: binding.formattedValue(state),
       status,
       reason,
@@ -215,9 +193,7 @@ export function createFieldController<
       return;
     }
 
-    const valueChanged =
-      !binding.sameValue(binding.valueOf(next), binding.valueOf(approved)) ||
-      binding.statusOf(next) !== binding.statusOf(approved);
+    const valueChanged = changedFrom(approved, next);
 
     // Focus, caret and selection changes are local UI state: adopt them
     // immediately in both modes and never emit a value change (FR-8).
@@ -245,12 +221,12 @@ export function createFieldController<
 
     if (controlled) {
       pending = { state: next, reason };
-      emitProposal(next, reason);
+      emit(next, reason);
       return;
     }
 
     approved = next;
-    emit(reason);
+    emit(next, reason);
     notify();
   }
 
@@ -331,15 +307,20 @@ export function createFieldController<
 
   function setValue(value: TValue): void {
     const next = binding.create(resolved, value);
+    const changed = changedFrom(approved, next);
     if (controlled) {
       pending = { state: next, reason: "programmatic" };
-      emitProposal(next, "programmatic");
+      if (changed) {
+        emit(next, "programmatic");
+      }
       return;
     }
     pushHistory(approved);
     mergeAnchor = null;
     approved = next;
-    emit("programmatic");
+    if (changed) {
+      emit(next, "programmatic");
+    }
     notify();
   }
 
@@ -356,16 +337,21 @@ export function createFieldController<
       return false;
     }
     const target = past[past.length - 1];
+    const changed = changedFrom(approved, target);
     if (controlled) {
       pending = { state: target, reason: "undo" };
-      emitProposal(target, "undo");
+      if (changed) {
+        emit(target, "undo");
+      }
       return true;
     }
     past.pop();
     future.push(approved);
     mergeAnchor = null;
     approved = target;
-    emit("undo");
+    if (changed) {
+      emit(target, "undo");
+    }
     notify();
     return true;
   }
@@ -375,16 +361,21 @@ export function createFieldController<
       return false;
     }
     const target = future[future.length - 1];
+    const changed = changedFrom(approved, target);
     if (controlled) {
       pending = { state: target, reason: "redo" };
-      emitProposal(target, "redo");
+      if (changed) {
+        emit(target, "redo");
+      }
       return true;
     }
     future.pop();
     past.push(approved);
     mergeAnchor = null;
     approved = target;
-    emit("redo");
+    if (changed) {
+      emit(target, "redo");
+    }
     notify();
     return true;
   }

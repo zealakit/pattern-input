@@ -52,7 +52,6 @@ export function createNumberInput(
   }
   assertInput(el);
 
-  let options = initialOptions;
   let resolved = resolveNumberOptions(initialOptions);
   const controller = createNumberController(initialOptions);
   const detach = attachInput(el, controller);
@@ -91,7 +90,6 @@ export function createNumberInput(
       return controller.redo();
     },
     setOptions(next) {
-      options = next;
       resolved = resolveNumberOptions(next);
       controller.setOptions(next);
       sync();
@@ -135,7 +133,6 @@ export function createNumberInput(
 
   controller.subscribe(sync);
   sync();
-  void options;
 
   return instance;
 }

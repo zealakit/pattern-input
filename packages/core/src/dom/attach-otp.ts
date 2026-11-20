@@ -1,6 +1,7 @@
 import type { FieldController } from "../controller/controller.js";
 import type { OtpEvent, OtpOptions, OtpState } from "../otp/index.js";
 import { isBrowser } from "./env.js";
+import type { OtpSlotList, OtpSlotRegistry } from "./slot-registry.js";
 
 type Listener = {
   readonly target: EventTarget;
@@ -10,6 +11,9 @@ type Listener = {
 
 export type OtpDetach = (() => void) & { readonly refresh: () => void };
 
+/** Where the group finds its slot inputs: a registry or a plain getter. */
+export type OtpSlotSource = OtpSlotRegistry | (() => OtpSlotList);
+
 /**
  * Wire an OTP group: per-slot input/paste/key handling, roving tabindex, focus
  * following `activeIndex`, and an optional hidden input kept in sync.
@@ -18,7 +22,7 @@ export type OtpDetach = (() => void) & { readonly refresh: () => void };
 export function attachOtpGroup(
   group: HTMLElement,
   controller: FieldController<OtpState, OtpEvent, string, OtpOptions>,
-  getSlots: () => readonly HTMLInputElement[],
+  source: OtpSlotSource,
   options: { readonly hiddenInput?: HTMLInputElement } = {},
 ): OtpDetach {
   if (!isBrowser()) {
@@ -26,7 +30,9 @@ export function attachOtpGroup(
     return Object.assign(noop, { refresh: noop });
   }
 
+  const getSlots = typeof source === "function" ? source : source.getSlots;
   const guard = { applying: false };
+  let composing = false;
   const attached = new WeakSet<HTMLInputElement>();
   const listeners: Listener[] = [];
 
@@ -44,18 +50,51 @@ export function attachOtpGroup(
     controller.dispatch(event as unknown as OtpEvent);
   };
 
+  /** Active slot, or the nearest mounted one when the active index has no element. */
+  const resolveTarget = (slots: OtpSlotList, active: number): number => {
+    if (slots[active] !== undefined) {
+      return active;
+    }
+    for (let index = active + 1; index < slots.length; index += 1) {
+      if (slots[index] !== undefined) {
+        return index;
+      }
+    }
+    for (
+      let index = Math.min(active, slots.length) - 1;
+      index >= 0;
+      index -= 1
+    ) {
+      if (slots[index] !== undefined) {
+        return index;
+      }
+    }
+    return -1;
+  };
+
   const render = (): void => {
+    // While composing, the browser owns the slot text: repainting would destroy it.
+    if (composing) {
+      return;
+    }
     const state = controller.getState();
     const slots = getSlots();
+    const target = resolveTarget(slots, state.activeIndex);
 
-    for (let index = 0; index < slots.length; index += 1) {
+    // Inputs past the field length are host-owned extras: leave them alone.
+    const count = Math.min(slots.length, state.slots.length);
+    for (let index = 0; index < count; index += 1) {
       const slot = slots[index];
-      if (slot.value !== state.slots[index]) {
+      if (slot === undefined) {
+        continue;
+      }
+      const expected = state.slots[index];
+      if (slot.value !== expected) {
         guard.applying = true;
-        slot.value = state.slots[index];
+        slot.value = expected;
         guard.applying = false;
       }
-      slot.tabIndex = index === state.activeIndex ? 0 : -1;
+      slot.tabIndex = index === target ? 0 : -1;
       attachSlot(slot);
     }
 
@@ -63,7 +102,7 @@ export function attachOtpGroup(
       options.hiddenInput.value = state.rawValue;
     }
 
-    const active = slots[state.activeIndex];
+    const active = slots[target];
     if (
       active &&
       group.contains(document.activeElement) &&
@@ -83,10 +122,10 @@ export function attachOtpGroup(
     const indexOf = (): number => getSlots().indexOf(slot);
 
     on(slot, "beforeinput", (event) => {
-      if (guard.applying) {
+      const input = event as InputEvent;
+      if (guard.applying || composing || input.isComposing) {
         return;
       }
-      const input = event as InputEvent;
       const inputType = input.inputType ?? "";
       if (inputType === "insertCompositionText") {
         return;
@@ -113,8 +152,13 @@ export function attachOtpGroup(
       }
     });
 
-    on(slot, "input", () => {
-      if (guard.applying || slot.value === "") {
+    on(slot, "input", (event) => {
+      if (
+        guard.applying ||
+        composing ||
+        (event as InputEvent).isComposing ||
+        slot.value === ""
+      ) {
         return;
       }
       const typed = slot.value;
@@ -122,7 +166,31 @@ export function attachOtpGroup(
       render();
     });
 
+    on(slot, "compositionstart", () => {
+      composing = true;
+      dispatch({ type: "composeStart" });
+    });
+
+    on(slot, "compositionupdate", (event) => {
+      dispatch({
+        type: "composeUpdate",
+        text: (event as CompositionEvent).data ?? "",
+      });
+    });
+
+    on(slot, "compositionend", (event) => {
+      composing = false;
+      dispatch({
+        type: "composeEnd",
+        text: (event as CompositionEvent).data ?? "",
+      });
+      render();
+    });
+
     on(slot, "paste", (event) => {
+      if (composing) {
+        return;
+      }
       const text =
         (event as ClipboardEvent).clipboardData?.getData("text/plain") ?? "";
       if (text === "") {
@@ -165,15 +233,19 @@ export function attachOtpGroup(
     if (next && group.contains(next)) {
       return;
     }
+    composing = false;
     dispatch({ type: "blur" });
     render();
   });
 
   const unsubscribe = controller.subscribe(render);
+  const unsubscribeSlots =
+    typeof source === "function" ? null : source.subscribe(render);
   render();
 
   const detach = (): void => {
     unsubscribe();
+    unsubscribeSlots?.();
     for (const listener of listeners) {
       listener.target.removeEventListener(listener.type, listener.handler);
     }

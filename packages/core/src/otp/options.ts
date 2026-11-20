@@ -39,10 +39,14 @@ export type ResolvedOtpOptions = {
 };
 
 export class OtpOptionsError extends Error {
-  readonly reason: "length";
+  readonly reason: "length" | "slotIndex";
 
-  constructor(reason: "length") {
-    super(`Invalid OTP options: ${reason}`);
+  constructor(reason: "length" | "slotIndex") {
+    super(
+      reason === "slotIndex"
+        ? "OTP slot index must be an integer from 0 to length - 1"
+        : "OTP length must be an integer from 1 to 32",
+    );
     this.name = "OtpOptionsError";
     this.reason = reason;
   }

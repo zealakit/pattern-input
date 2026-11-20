@@ -11,6 +11,7 @@ import {
 import {
   attachInput,
   attachOtpGroup,
+  createOtpSlotRegistry,
   isBrowser,
 } from "../../dist/dom/index.js";
 import type { Vector } from "../support/run-vector.js";
@@ -385,4 +386,223 @@ test("vectors(dom): every vector passes through DOM events", () => {
 
 test("dom: isBrowser is true under happy-dom", () => {
   assert.equal(isBrowser(), true);
+});
+
+test("dom: slot registry keeps slots by index regardless of mount order", () => {
+  const first = document.createElement("input");
+  const third = document.createElement("input");
+  const registry = createOtpSlotRegistry();
+  let notified = 0;
+  const off = registry.subscribe(() => {
+    notified += 1;
+  });
+
+  const unregisterThird = registry.register(2, third);
+  const unregisterFirst = registry.register(0, first);
+  const list = registry.getSlots();
+
+  assert.equal(list.length, 3);
+  assert.equal(list[0], first);
+  assert.equal(list[1], undefined);
+  assert.equal(list[2], third);
+  assert.equal(registry.getSlots(), list, "stable until it changes");
+  assert.equal(notified, 2);
+
+  unregisterFirst();
+  unregisterFirst();
+  assert.equal(registry.getSlots()[0], undefined);
+  assert.equal(notified, 3, "unregister is idempotent");
+
+  unregisterThird();
+  assert.equal(registry.getSlots().length, 0);
+  off();
+  assert.throws(() => registry.register(-1, first), RangeError);
+});
+
+test("dom: slot ref callbacks are stable, idempotent and never flash a gap", () => {
+  const slot = document.createElement("input");
+  const other = document.createElement("input");
+  const registry = createOtpSlotRegistry();
+  const seen: (HTMLInputElement | undefined)[] = [];
+  registry.subscribe(() => seen.push(registry.getSlots()[0]));
+
+  const ref = registry.refFor(0);
+  assert.equal(registry.refFor(0), ref, "stable per index");
+
+  ref(slot);
+  ref(slot);
+  ref(slot);
+  assert.deepEqual(seen, [slot], "re-invoking with the same element is silent");
+
+  ref(other);
+  assert.equal(registry.getSlots()[0], other);
+  assert.deepEqual(seen, [slot, other], "swapping elements never shows a gap");
+
+  ref(null);
+  assert.equal(registry.getSlots().length, 0);
+});
+
+test("dom: OTP group works with a registry and sparse, nested slots", () => {
+  const group = document.createElement("div");
+  const wrapper = document.createElement("div");
+  group.append(wrapper);
+  const slots = [0, 1, 3, 4].map(() => document.createElement("input"));
+  wrapper.append(...slots);
+  document.body.append(group);
+
+  const controller = createOtpController({
+    length: 5,
+    onValueChange: () => {},
+  });
+  const registry = createOtpSlotRegistry();
+  const detach = attachOtpGroup(group, controller, registry);
+
+  try {
+    // Slot 2 is intentionally never rendered.
+    [0, 1, 3, 4].forEach((index, position) => {
+      registry.register(index, slots[position]);
+    });
+
+    slots[0].focus();
+    beforeInput(slots[0], "insertText", "1");
+    beforeInput(slots[1], "insertText", "2");
+
+    assert.equal(controller.value, "12");
+    assert.equal(slots[0].value, "1");
+    assert.equal(slots[1].value, "2");
+    // Active index 2 has no element: the next mounted slot (index 3) takes focus.
+    assert.equal(slots[2].tabIndex, 0);
+    assert.equal(slots[0].tabIndex, -1);
+  } finally {
+    detach();
+  }
+});
+
+test("dom: composition text typed by the browser is never repainted over", () => {
+  const element = input();
+  const controller = createNumberController({
+    maximumFractionDigits: 2,
+    onValueChange: () => {},
+  });
+  const detach = attachInput(element, controller);
+
+  try {
+    element.focus();
+    element.dispatchEvent(compositionEvent("compositionstart", ""));
+    // The browser, not the library, puts in-progress IME text in the DOM.
+    element.value = "ni";
+    element.dispatchEvent(compositionEvent("compositionupdate", "ni"));
+
+    assert.equal(element.value, "ni", "update must not clobber the IME text");
+
+    element.dispatchEvent(compositionEvent("compositionend", "12"));
+    assert.equal(element.value, "12");
+    assert.equal(controller.value, 12);
+  } finally {
+    detach();
+  }
+});
+
+test("dom: cut without a selection does nothing", () => {
+  const element = input();
+  const controller = createNumberController({ onValueChange: () => {} });
+  const detach = attachInput(element, controller);
+
+  try {
+    beforeInput(element, "insertText", "1");
+    beforeInput(element, "insertText", "2");
+    element.setSelectionRange(2, 2);
+
+    const { event, written } = clipboardEvent("cut");
+    element.dispatchEvent(event);
+
+    assert.equal(event.defaultPrevented, false);
+    assert.deepEqual(written, []);
+    assert.equal(controller.value, 12);
+  } finally {
+    detach();
+  }
+});
+
+test("dom: OTP slots ignore input during composition and commit once at the end", () => {
+  const group = document.createElement("div");
+  const slots = Array.from({ length: 4 }, () => {
+    const slot = document.createElement("input");
+    group.append(slot);
+    return slot;
+  });
+  document.body.append(group);
+
+  const changes: unknown[] = [];
+  const controller = createOtpController({
+    length: 4,
+    onValueChange: (change) => changes.push(change),
+  });
+  const detach = attachOtpGroup(group, controller, () => slots);
+
+  try {
+    slots[0].focus();
+    slots[0].dispatchEvent(compositionEvent("compositionstart", ""));
+    slots[0].value = "7";
+    slots[0].dispatchEvent(new Event("input", { bubbles: true }));
+    slots[0].dispatchEvent(compositionEvent("compositionupdate", "7"));
+
+    assert.equal(controller.value, "", "no commit while composing");
+    assert.equal(slots[0].value, "7", "IME text is not repainted over");
+
+    slots[0].dispatchEvent(compositionEvent("compositionend", "7"));
+    assert.equal(controller.value, "7");
+    assert.equal(changes.length, 1);
+    assert.equal(document.activeElement, slots[1]);
+  } finally {
+    detach();
+  }
+});
+
+test("dom: OTP composition of a character the slot rejects leaves it empty", () => {
+  const group = document.createElement("div");
+  const slot = document.createElement("input");
+  group.append(slot);
+  document.body.append(group);
+
+  const controller = createOtpController({
+    length: 1,
+    onValueChange: () => {},
+  });
+  const detach = attachOtpGroup(group, controller, () => [slot]);
+
+  try {
+    slot.focus();
+    slot.dispatchEvent(compositionEvent("compositionstart", ""));
+    slot.value = "a";
+    slot.dispatchEvent(compositionEvent("compositionend", "a"));
+
+    assert.equal(controller.value, "");
+    assert.equal(slot.value, "");
+  } finally {
+    detach();
+  }
+});
+
+test("dom: OTP group leaves host-owned inputs past the field length alone", () => {
+  const group = document.createElement("div");
+  const slots = [0, 1].map(() => document.createElement("input"));
+  const extra = document.createElement("input");
+  extra.value = "keep me";
+  group.append(...slots, extra);
+  document.body.append(group);
+
+  const controller = createOtpController({
+    length: 2,
+    onValueChange: () => {},
+  });
+  const detach = attachOtpGroup(group, controller, () => [...slots, extra]);
+
+  try {
+    slots[0].focus();
+    beforeInput(slots[0], "insertText", "1");
+    assert.equal(extra.value, "keep me");
+  } finally {
+    detach();
+  }
 });

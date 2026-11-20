@@ -81,6 +81,19 @@ for (const example of examples) {
       await expect(page.getByTestId("code-slot-5")).toBeFocused();
     });
 
+    test("OTP layout: one accessible group with a decorative separator", async ({
+      page,
+    }) => {
+      const code = page.getByTestId("code");
+      await expect(code).toHaveAttribute("role", "group");
+      await expect(code.locator('[role="group"]')).toHaveCount(0);
+      await expect(page.getByTestId("code-sep")).toHaveAttribute(
+        "aria-hidden",
+        "true",
+      );
+      await expect(page.getByTestId("code-sep")).not.toHaveAttribute("role");
+    });
+
     test("AC-7 e2e: a rejected controlled paste is not rendered", async ({
       page,
     }) => {

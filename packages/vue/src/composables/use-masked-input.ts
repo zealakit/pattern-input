@@ -1,4 +1,4 @@
-import { toValue, type MaybeRefOrGetter } from "vue";
+import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import {
   createMaskedController,
   getMaskedInputProps,
@@ -14,6 +14,7 @@ export function useMaskedInput(options: MaybeRefOrGetter<MaskedInputOptions>) {
     options,
   );
   const { inputRef, getElement } = useInputElement(controller);
+  const resolved = computed(() => resolveMaskedOptions(toValue(options)));
 
   return {
     state,
@@ -22,8 +23,7 @@ export function useMaskedInput(options: MaybeRefOrGetter<MaskedInputOptions>) {
     status: () => controller.status,
     inputRef,
     getInputProps(extra: Record<string, unknown> = {}) {
-      const resolved = resolveMaskedOptions(toValue(options));
-      return { ...getMaskedInputProps(state.value, resolved), ...extra };
+      return { ...getMaskedInputProps(state.value, resolved.value), ...extra };
     },
     setValue: (value: string) => controller.setValue(value),
     clear: () => controller.clear(),

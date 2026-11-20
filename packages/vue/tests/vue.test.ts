@@ -15,8 +15,11 @@ import { mount } from "@vue/test-utils";
 import {
   GETTER_NAMES,
   INSTANCE_API,
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
   NumberInput,
-  OtpInput,
   PatternInputError,
   useNumberInput,
 } from "../dist/index.js";
@@ -178,21 +181,139 @@ test("vue: scope dispose detaches listeners", () => {
   assert.equal(second.defaultPrevented, false);
 });
 
-test("vue: OtpInput paste focuses the last slot", () => {
-  const wrapper = mount(OtpInput, {
-    props: { length: 6, options: {} },
+function otpSlots(root: Element): HTMLInputElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLInputElement>('input:not([type="hidden"])'),
+  );
+}
+
+/** A 3 + 3 grouping with a separator between, like `<InputOTP.Group>` markup. */
+function groupedSlots() {
+  const slot = (index: number) => h(InputOTPSlot, { index, key: index });
+  return () => [
+    h(InputOTPGroup, { "data-group": "a" }, () => [0, 1, 2].map(slot)),
+    h(InputOTPSeparator, { "data-testid": "sep" }, () => "-"),
+    h(InputOTPGroup, { "data-group": "b" }, () => [3, 4, 5].map(slot)),
+  ];
+}
+
+function mountOtp(props: Record<string, unknown> = {}) {
+  return mount(InputOTP, {
+    props: { maxLength: 6, label: "Code", ...props },
+    slots: { default: groupedSlots() },
     attachTo: document.body,
   });
-  const slots = Array.from(
-    (wrapper.element as HTMLElement).querySelectorAll<HTMLInputElement>(
-      'input:not([type="hidden"])',
-    ),
-  );
+}
+
+test("vue: InputOTP paste fills grouped slots and focuses the last", () => {
+  const wrapper = mountOtp();
+  const slots = otpSlots(wrapper.element);
   assert.equal(slots.length, 6);
 
   slots[0].focus();
   paste(slots[0], "123456");
+
   assert.equal(document.activeElement, slots[5]);
+  assert.deepEqual(
+    slots.map((slot) => slot.value),
+    ["1", "2", "3", "4", "5", "6"],
+  );
+  wrapper.unmount();
+});
+
+test("vue: InputOTP exposes one accessible group and a decorative separator", () => {
+  const wrapper = mountOtp({ name: "code", class: "root" });
+
+  const root = wrapper.element as HTMLElement;
+  assert.equal(root.getAttribute("role"), "group");
+  assert.equal(
+    root.querySelectorAll('[role="group"]').length,
+    0,
+    "InputOTPGroup adds no second group",
+  );
+  assert.equal(root.getAttribute("aria-label"), "Code");
+  assert.ok(root.classList.contains("root"), "attrs fall through");
+
+  const separator = root.querySelector('[data-testid="sep"]');
+  assert.equal(separator?.getAttribute("aria-hidden"), "true");
+  assert.equal(separator?.getAttribute("role"), null);
+  assert.equal(
+    root.querySelector<HTMLInputElement>('input[type="hidden"]')?.name,
+    "code",
+  );
+  wrapper.unmount();
+});
+
+test("vue: InputOTP v-model approval fills, rejection never renders", async () => {
+  const wrapper = mountOtp({
+    modelValue: "",
+    "onUpdate:modelValue": (value: string) => {
+      if (value !== "999999") {
+        void wrapper.setProps({ modelValue: value });
+      }
+    },
+  });
+  const slots = otpSlots(wrapper.element);
+  slots[0].focus();
+
+  paste(slots[0], "999999");
+  await nextTick();
+  assert.deepEqual(
+    slots.map((slot) => slot.value),
+    ["", "", "", "", "", ""],
+  );
+
+  paste(slots[0], "123456");
+  await nextTick();
+  assert.equal(slots[5].value, "6");
+  assert.equal(
+    (wrapper.element as HTMLElement).querySelector<HTMLInputElement>(
+      'input[type="hidden"]',
+    )?.value,
+    "123456",
+  );
+  wrapper.unmount();
+});
+
+test("vue: InputOTP tolerates a missing slot index (sparse layout)", () => {
+  const wrapper = mount(InputOTP, {
+    props: { maxLength: 4 },
+    slots: {
+      default: () =>
+        [0, 1, 3].map((index) => h(InputOTPSlot, { index, key: index })),
+    },
+    attachTo: document.body,
+  });
+  const slots = otpSlots(wrapper.element);
+  assert.equal(slots.length, 3);
+  slots[0].focus();
+  paste(slots[0], "1234");
+  assert.equal(slots[2].value, "4");
+  wrapper.unmount();
+});
+
+test("vue: InputOTPSlot outside InputOTP throws a helpful error", () => {
+  assert.throws(
+    () => mount(InputOTPSlot, { props: { index: 0 } }),
+    /must be rendered inside <InputOTP>/,
+  );
+});
+
+test("vue: InputOTPSlot with an out-of-range index throws", () => {
+  assert.throws(
+    () =>
+      mount(InputOTP, {
+        props: { maxLength: 2 },
+        slots: { default: () => h(InputOTPSlot, { index: 2 }) },
+      }),
+    /slot index/,
+  );
+});
+
+test("vue: InputOTP.Group, Slot and Separator are available on the root", () => {
+  assert.equal(InputOTP.Group, InputOTPGroup);
+  assert.equal(InputOTP.Slot, InputOTPSlot);
+  assert.equal(InputOTP.Separator, InputOTPSeparator);
 });
 
 test("vue: SSR render has no window access and renders initial value", () => {

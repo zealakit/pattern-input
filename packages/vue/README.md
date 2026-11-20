@@ -30,17 +30,58 @@ field.value(); field.formattedValue(); field.status();
 field.setValue(99); field.clear(); field.undo(); field.redo();
 ```
 
+## OTP layout
+
+Layout is yours. `InputOTP.Group` and `InputOTP.Separator` are plain elements, so you can group slots, add separators or wrap anything. Each `InputOTP.Slot` takes an explicit `index` from `0` to `maxLength - 1`.
+
+```vue
+<script setup lang="ts">
+import { InputOTP } from "@zealakit/pattern-input-vue";
+import { ref } from "vue";
+
+const code = ref("");
+</script>
+
+<template>
+  <InputOTP v-model="code" :max-length="6" name="code" label="Verification code">
+    <InputOTP.Group>
+      <InputOTP.Slot :index="0" />
+      <InputOTP.Slot :index="1" />
+      <InputOTP.Slot :index="2" />
+    </InputOTP.Group>
+    <InputOTP.Separator>-</InputOTP.Separator>
+    <InputOTP.Group>
+      <InputOTP.Slot :index="3" />
+      <InputOTP.Slot :index="4" />
+      <InputOTP.Slot :index="5" />
+    </InputOTP.Group>
+  </InputOTP>
+</template>
+```
+
+The root renders one `role="group"` (named by `label` or `labelledBy`) and a hidden input carrying the full code under `name`. Groups add no extra accessibility semantics and separators are hidden from assistive technology. Slot attributes that drive behavior (`type`, `inputmode`, `maxlength`, `tabindex`, `autocomplete`, `aria-label`) are owned by the field; everything else, including `class` and `id`, passes through. `v-model` works on the root.
+
+Dot notation (`<InputOTP.Group>`) needs `<script setup>`; the parts are also exported by name (`InputOTPGroup`, `InputOTPSlot`, `InputOTPSeparator`).
+
 ## Contract
 
 Every field exposes `value`, `formattedValue`, and `status`, plus `setValue`, `clear`, `focus`, `undo`, and `redo`. Getters are named `getInputProps` for number and masked, and `getGroupProps` / `getSlotProps` / `getHiddenInputProps` for OTP. `CONTRACT_VERSION` is exported from the package.
 
 ## Behavior
 
-- Caret and selection survive formatting, editing, and paste.\n- Paste is parsed by the field; literals and separators are handled.\n- IME composition commits once, after `compositionend`.\n- Controlled and uncontrolled modes are both supported.\n- Undo/redo restore value and caret.\n- ARIA: `aria-invalid` only for real invalid state.
+- Caret and selection survive formatting, editing, and paste.
+- Paste is parsed by the field; literals and separators are handled.
+- IME composition commits once, after `compositionend`.
+- Controlled and uncontrolled modes are both supported.
+- Undo/redo restore value and caret.
+- ARIA: `aria-invalid` only for real invalid state.
 
 ## Non-goals
 
-- No default styles, themes, or class names.\n- No bundled schema validation (consumer callbacks only).\n- No wrapping or replacing plain-text inputs.\n- No date pickers, currency conversion, phone metadata, or network calls.
+- No default styles, themes, or class names.
+- No bundled schema validation (consumer callbacks only).
+- No wrapping or replacing plain-text inputs.
+- No date pickers, currency conversion, phone metadata, or network calls.
 
 ## License
 

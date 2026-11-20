@@ -3,7 +3,8 @@ export type AttributeProps = Readonly<Record<string, unknown>>;
 /**
  * Diff-apply plain attribute props: booleans become present/absent attributes,
  * strings/numbers become values. Only names present in `previous` or `props`
- * are touched, so host-owned attributes are never disturbed.
+ * are touched, and unchanged values are skipped, so host-owned attributes are
+ * never disturbed and steady-state updates cost no DOM writes.
  */
 export function applyProps(
   el: Element,
@@ -14,6 +15,9 @@ export function applyProps(
 
   for (const name of names) {
     const value = props[name];
+    if (name in previous && previous[name] === value) {
+      continue;
+    }
     if (value === undefined || value === null || value === false) {
       el.removeAttribute(name);
       continue;

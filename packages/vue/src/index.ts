@@ -32,4 +32,9 @@ export type { OtpInputOptions } from "./composables/use-otp-input.js";
 export { useOtpInput } from "./composables/use-otp-input.js";
 export { NumberInput } from "./components/number-input.js";
 export { MaskedInput } from "./components/masked-input.js";
-export { OtpInput } from "./components/otp-input.js";
+export {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "./components/otp-input.js";

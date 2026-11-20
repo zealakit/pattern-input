@@ -12,11 +12,16 @@ import {
   PatternInputError,
   resolveOtpOptions,
 } from "@zealakit/pattern-input-core";
-import { attachOtpGroup, isBrowser } from "@zealakit/pattern-input-core/dom";
+import {
+  attachOtpGroup,
+  isBrowser,
+  type OtpSlotList,
+} from "@zealakit/pattern-input-core/dom";
 import { applyProps, type AttributeProps } from "./apply-props.js";
 
 export type OtpInputOptions = FieldControllerOptions<string, OtpOptions> & {
-  readonly slots?: () => readonly HTMLInputElement[];
+  /** Slot inputs by index; leave an index `undefined` for a slot you do not render. */
+  readonly slots?: () => OtpSlotList;
   readonly hiddenInput?: HTMLInputElement;
 };
 
@@ -122,7 +127,8 @@ export function createOtpInput(
     },
     focus() {
       const slots = getSlots();
-      const active = slots[controller.getState().activeIndex] ?? slots[0];
+      const active =
+        slots[controller.getState().activeIndex] ?? slots.find(Boolean);
       (active ?? group).focus();
     },
     undo() {
@@ -147,7 +153,9 @@ export function createOtpInput(
       controller.destroy();
       restore(group);
       for (const slot of getSlots()) {
-        restore(slot);
+        if (slot !== undefined) {
+          restore(slot);
+        }
       }
       if (options.hiddenInput) {
         restore(options.hiddenInput);
@@ -180,10 +188,16 @@ export function createOtpInput(
       getOtpGroupProps(state, resolved) as unknown as AttributeProps,
     );
     const slots = getSlots();
-    for (let index = 0; index < slots.length; index += 1) {
+    // Inputs past the field length are host-owned extras: leave them alone.
+    const count = Math.min(slots.length, resolved.length);
+    for (let index = 0; index < count; index += 1) {
+      const slot = slots[index];
+      if (slot === undefined) {
+        continue;
+      }
       track(
         tracked,
-        slots[index],
+        slot,
         getOtpSlotProps(state, resolved, index) as unknown as AttributeProps,
       );
     }

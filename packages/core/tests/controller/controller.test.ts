@@ -63,6 +63,23 @@ test("AC-7: controlled paste rejected keeps the approved state and caret", () =>
   assert.equal(controller.getState().selection.focus.offset, 3);
 });
 
+test("controlled: a rejected proposal can be proposed again", () => {
+  const proposals: (number | null)[] = [];
+  const controller = createNumberController({
+    value: 1,
+    onValueChange: (change: ValueChange<number | null>) =>
+      proposals.push(change.value),
+    now: () => 0,
+  });
+
+  controller.dispatch({ type: "paste", text: "5000" });
+  controller.dispatch({ type: "paste", text: "5000" });
+
+  // The consumer never approved either, so both must reach it.
+  assert.equal(proposals.length, 2);
+  assert.equal(controller.value, 1, "approved value is unchanged");
+});
+
 test("controlled: an approved proposal is adopted with its caret", () => {
   const options = {
     value: 12,
