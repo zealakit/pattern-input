@@ -1,4 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
+
+/**
+ * Dispatch a synthetic paste. Firefox ignores `clipboardData` in the
+ * `ClipboardEvent` constructor, so define it on a plain event instead; that
+ * works in every engine.
+ */
+async function pasteText(target: Locator, text: string): Promise<void> {
+  await target.evaluate((element, value) => {
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", {
+      value: { getData: () => value, setData: () => {} },
+    });
+    element.dispatchEvent(event);
+  }, text);
+}
 
 const examples = [
   { name: "vanilla", url: "http://127.0.0.1:4173" },
@@ -31,32 +46,12 @@ for (const example of examples) {
     }) => {
       const tax = page.getByTestId("tax");
       await tax.click();
-      await tax.evaluate((element) => {
-        const data = new DataTransfer();
-        data.setData("text/plain", "123.456.789-00");
-        element.dispatchEvent(
-          new ClipboardEvent("paste", {
-            clipboardData: data,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      });
+      await pasteText(tax, "123.456.789-00");
       await expect(tax).toHaveValue("123.456.789-00");
       await expect(tax).not.toHaveAttribute("aria-invalid");
 
       await tax.fill("");
-      await tax.evaluate((element) => {
-        const data = new DataTransfer();
-        data.setData("text/plain", "12345");
-        element.dispatchEvent(
-          new ClipboardEvent("paste", {
-            clipboardData: data,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      });
+      await pasteText(tax, "12345");
       await expect(tax).not.toHaveAttribute("aria-invalid");
     });
 
@@ -65,17 +60,7 @@ for (const example of examples) {
     }) => {
       const first = page.getByTestId("code-slot-0");
       await first.click();
-      await first.evaluate((element) => {
-        const data = new DataTransfer();
-        data.setData("text/plain", "123456");
-        element.dispatchEvent(
-          new ClipboardEvent("paste", {
-            clipboardData: data,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      });
+      await pasteText(first, "123456");
 
       await expect(page.getByTestId("code-slot-5")).toHaveValue("6");
       await expect(page.getByTestId("code-slot-5")).toBeFocused();
@@ -99,17 +84,7 @@ for (const example of examples) {
     }) => {
       const controlled = page.getByTestId("controlled");
       await controlled.click();
-      await controlled.evaluate((element) => {
-        const data = new DataTransfer();
-        data.setData("text/plain", "5000");
-        element.dispatchEvent(
-          new ClipboardEvent("paste", {
-            clipboardData: data,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      });
+      await pasteText(controlled, "5000");
       await expect(controlled).toHaveValue("");
     });
 
