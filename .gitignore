@@ -1,0 +1,40 @@
+# Local
+.DS_Store
+*.local
+*.log*
+
+# Dependencies / build
+node_modules
+dist/
+**/dist/
+.svelte-kit/
+**/.svelte-kit/
+**/.next/
+**/node_modules/.vite/
+*.tsbuildinfo
+
+# Caches
+.pnpm-store
+
+# IDE
+!.vscode/extensions.json
+.idea
+
+# Test / coverage
+coverage
+
+# End-to-end runs
+e2e/test-results/
+e2e/playwright-report/
+
+# Dependency monitor
+monitor/reports/*
+!monitor/reports/.gitkeep
+
+artifacts/
+
+# Workflow (zlak-flow keeps its own state here)
+.zlak-flow/
+
+# Playwright browsers (workspace-local when the global cache is read-only)
+.playwright/

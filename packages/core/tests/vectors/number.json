@@ -1,0 +1,159 @@
+[
+  {
+    "name": "AC-3 typing over precision is rejected, never rounded",
+    "field": "number",
+    "options": {
+      "maximumFractionDigits": 2
+    },
+    "steps": [
+      {
+        "event": {
+          "type": "focus"
+        }
+      },
+      {
+        "typeText": "1234.567"
+      }
+    ],
+    "expect": {
+      "value": 1234.56,
+      "formattedValue": "1,234.56",
+      "status": "complete",
+      "caret": 8,
+      "changes": 7
+    }
+  },
+  {
+    "name": "empty number is null, not zero",
+    "field": "number",
+    "options": {},
+    "steps": [],
+    "expect": {
+      "value": null,
+      "formattedValue": "",
+      "status": "empty",
+      "caret": 0,
+      "changes": 0
+    }
+  },
+  {
+    "name": "grouping insert keeps the caret after the typed digit",
+    "field": "number",
+    "options": {},
+    "steps": [
+      {
+        "typeText": "1234"
+      }
+    ],
+    "expect": {
+      "value": 1234,
+      "formattedValue": "1,234",
+      "caret": 5,
+      "changes": 4
+    }
+  },
+  {
+    "name": "de-DE formats with locale separators",
+    "field": "number",
+    "options": {
+      "locale": "de-DE"
+    },
+    "steps": [
+      {
+        "typeText": "1234,56"
+      }
+    ],
+    "expect": {
+      "value": 1234.56,
+      "formattedValue": "1.234,56",
+      "caret": 8,
+      "changes": 7
+    }
+  },
+  {
+    "name": "paste of a currency string is parsed",
+    "field": "number",
+    "options": {
+      "locale": "de-DE"
+    },
+    "steps": [
+      {
+        "event": {
+          "type": "paste",
+          "text": "1.234,56 \u20ac"
+        }
+      }
+    ],
+    "expect": {
+      "value": 1234.56,
+      "formattedValue": "1.234,56",
+      "changes": 1
+    }
+  },
+  {
+    "name": "arrow step uses exact decimal math",
+    "field": "number",
+    "options": {
+      "step": 1
+    },
+    "steps": [
+      {
+        "typeText": "10"
+      },
+      {
+        "event": {
+          "type": "step",
+          "direction": 1,
+          "large": false
+        }
+      }
+    ],
+    "expect": {
+      "value": 11,
+      "formattedValue": "11",
+      "changes": 3
+    }
+  },
+  {
+    "name": "commit clamps to max",
+    "field": "number",
+    "options": {
+      "max": 100
+    },
+    "steps": [
+      {
+        "typeText": "150"
+      },
+      {
+        "event": {
+          "type": "commit"
+        }
+      }
+    ],
+    "expect": {
+      "value": 100,
+      "formattedValue": "100",
+      "changes": 4
+    }
+  },
+  {
+    "name": "backspace deletes the previous unit",
+    "field": "number",
+    "options": {},
+    "steps": [
+      {
+        "typeText": "12"
+      },
+      {
+        "key": {
+          "key": "Backspace"
+        }
+      }
+    ],
+    "expect": {
+      "value": 1,
+      "formattedValue": "1",
+      "changes": 3
+    }
+  }
+]

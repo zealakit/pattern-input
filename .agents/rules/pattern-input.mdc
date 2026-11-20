@@ -1,0 +1,41 @@
+---
+description: Zealakit Pattern Input monorepo conventions — package boundaries, DOM isolation, SSR safety
+alwaysApply: true
+---
+
+# Zealakit Pattern Input conventions
+
+- `@zealakit/pattern-input-core` is framework-independent and has two entries: `.` (pure: state
+  machines, parsers, prop getters) and `./dom` (the shared DOM binding). Never import React / Vue /
+  Svelte from it, and never import `./dom` from the pure entry.
+- Adapters (`vanilla`, `react`, `vue`, `svelte`) depend on core with `workspace:^`; core depends
+  on no adapter. Keep the dependency graph acyclic.
+- The `.` entry must stay DOM-free: `tsconfig.pure.json` typechecks it with `lib: ["ES2022"]`.
+  Any `window`/`document`/`Element` use in `packages/core/src` outside `src/dom/` fails checks.
+- SSR safety: no `window` / `document` access at module init or during render. DOM work belongs in
+  the `./dom` binding or framework lifecycle hooks.
+- Formatting and parsing are pure over `(rawValue, options)`; the caret is sticky relative to the
+  raw value, never an index into the formatted string.
+- IME composition commits exactly once at `compositionend`. Never format, reject, or commit state
+  mid-composition.
+- The `./dom` binding is the only writer of `el.value` and selection. Framework adapters must not
+  bind `value` reactively.
+- Do not ship default CSS, class names, themes, or design tokens. Styling is the consumer's job.
+- Never wrap or replace a plain-text `<input>`. Fields attach behavior to consumer-owned elements,
+  or render only the specialized field's own element(s).
+- No bundled schema validation: validity comes from the field's own parsing plus optional consumer
+  callbacks.
+- New core primitives ship with focused tests (`pnpm test`). Do not add a second test framework.
+- Do not export unimplemented APIs, placeholder components, or fake implementations.
+- TypeScript only: `type` aliases, `import type`, strict mode, ESM with `.js` specifiers, kebab-case
+  file names, no `any` in exported signatures.
+- Build order matters: core emits `dist` first; adapters resolve core through its package exports.
+  Run `pnpm build` before `pnpm typecheck`.
+- Verify with `pnpm check` (build + typecheck + test + lint) before reporting work as done. Run
+  `pnpm readme:check` after README changes and the relevant example builds when those areas change.
+- `examples/` are integration/smoke-test projects only. Product documentation lives only in the
+  root and package READMEs (EN, VI, CN); there is no `docs/` folder and no separate docs app.
+- Load the compact `.agents/skills/pattern-input/SKILL.md` before code, test, docs, or release work,
+  and `.agents/skills/readme-system/SKILL.md` before touching any README.
+- Update the READMEs, `.agents/AGENTS.md`, and `.agents/skills/pattern-input/SKILL.md` together when
+  architecture, package boundaries, commands, or documented workflows change.

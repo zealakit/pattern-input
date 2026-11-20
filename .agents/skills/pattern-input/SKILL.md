@@ -1,0 +1,400 @@
+# Pattern Input — architecture and contract skill
+
+Compact pre-read for code, test, docs, and release work in this repository. Plans 00–13 are
+implemented: the core kernel, the DOM binding, the four adapters, the conformance vectors, the
+examples/e2e workspace, and the release gates. Everything below is current behavior — keep it in
+sync when the contract changes.
+
+## What this is
+
+Headless behavioral primitives for three specialized fields — number, masked, and one-time-code
+(OTP) — for Vanilla TypeScript, React, Vue, and Svelte. The library owns formatting, caret/selection,
+keyboard handling, paste, IME, and ARIA. It owns no styles, no themes, and no validation engine, and
+it never wraps a plain-text `<input>`.
+
+## Package graph
+
+```
+packages/core  (private, bundled — never published)
+   ├── "."      pure: state machines, parsers, prop getters, controller
+   └── "./dom"  the one shared DOM binding: beforeinput, IME, clipboard, selection
+        ▲
+        │  workspace:^ (bundled into each tarball as dist/vendor/core/)
+        ├── packages/vanilla   @zealakit/pattern-input-vanilla
+        ├── packages/react     @zealakit/pattern-input-react
+        ├── packages/vue       @zealakit/pattern-input-vue
+        └── packages/svelte    @zealakit/pattern-input-svelte
+```
+
+Adapters → core only. Core imports no framework and no adapter. The pure entry imports nothing
+from `./dom`; only adapters import `./dom`. `packages/core/tsconfig.pure.json` typechecks `src/`
+minus `src/dom/` with `lib: ["ES2022"]`, so a DOM global in the pure entry fails `pnpm typecheck`.
+
+## Value model (D6)
+
+Every field exposes two values and one status:
+
+- `rawValue` — machine-readable: `number | null` (number field), or the string of editable
+  characters only, no literals/separators (masked, OTP).
+- `formattedValue` — exactly the string the user sees.
+- `status` — `"empty" | "incomplete" | "complete" | "invalid"`. An incomplete value is **never**
+  reported as invalid.
+
+The number field additionally keeps a canonical `rawText` while editing so inputs such as `"-"`,
+`"12."`, and `"1.50"` survive until commit, when they are normalized.
+
+## Event model (D6, D2)
+
+Core logic is a pure reducer over explicit events — never ad-hoc DOM handlers:
+
+| Event | Meaning |
+| --- | --- |
+| `insert` | text insertion at the current selection |
+| `delete` | backward/forward deletion by character, word, or selection |
+| `paste` | pasted text, parsed by the field's own parser |
+| `composeStart` / `composeUpdate` / `composeEnd` | IME composition window; commits once at end |
+| `commit` | finalize the editing value (clamp/normalize/validate) |
+| `focus` / `blur` | focus lifecycle (blur commits) |
+| `reset` | return to the initial value |
+| `setValue` | programmatic value assignment |
+| `setSelection` | programmatic sticky-caret assignment |
+| `step` | number field only; arrow/step navigation |
+
+Formatting and parsing are pure functions over `(rawValue, options)`. The caret is a sticky
+position counted in editable units relative to the raw value — never an index into the formatted
+string.
+
+## DOM binding
+
+`@zealakit/pattern-input-core/dom` is the only place DOM events become controller events.
+
+- `attachInput(el, controller, { platform? })` returns a `Detach`. It maps `beforeinput`
+  (`insertText`/`insertReplacementText` → insert, `insertFromPaste`/`insertFromDrop` → paste,
+  `deleteContent*`/`deleteWord*`/`delete*Line*` → deletes, `historyUndo`/`historyRedo` → undo/redo)
+  and calls `preventDefault` only for types it handled. `insertCompositionText` is ignored: the
+  IME owns the DOM. Unknown types fall through.
+- `input` is a fallback for browsers without a cancelable `beforeinput`: diff `el.value` against
+  the last rendered text, derive an insert or deletes, then repaint.
+- Composition: `composeStart`/`composeUpdate`/exactly one `composeEnd`; nothing is formatted or
+  rejected in between (FR-17).
+- `keydown` goes through `controller.handleKey`; handled keys are prevented, Tab and modified keys
+  fall through. `isComposing` and legacy `keyCode 229` are skipped.
+- Paste/copy/cut use `clipboardData` text; copy writes the formatted selection, cut writes it and
+  deletes the selection. Selection changes while focused dispatch `select`, snapping through the
+  editable map (FR-14).
+- After every handled event the binding repaints `el.value` and the selection under an `applying`
+  guard, so its own synthetic events are ignored. Controlled mode always paints the approved
+  state, so a rejected proposal is never shown (AC-7).
+- `attachOtpGroup(group, controller, source, { hiddenInput? })` wires per-slot
+  beforeinput/input/composition/paste/key/focus, keeps roving `tabindex`, moves focus to
+  `activeIndex`, and keeps the hidden input in sync. `source` is an `OtpSlotRegistry` (preferred:
+  it refreshes itself when slots register) or a `() => OtpSlotList` getter plus `refresh()`.
+  Slots are addressed by **index**, so they may sit in any DOM structure, mount in any order and
+  be sparse (`undefined` = not rendered; roving tabindex and focus fall back to the nearest
+  mounted slot). Inputs past the field length are host-owned and left alone.
+- `createOtpSlotRegistry()` is the one shared slot tracker: `register(index, el)` and a stable,
+  idempotent `refFor(index)` ref callback. Adapters wire it to framework refs/actions; do not
+  re-implement a Map-plus-sort per adapter. Idempotence matters: Vue re-invokes function refs on
+  every patch, and a transient "slot missing" state makes the group re-point focus in a loop.
+- While a composition is open the binding does not repaint (`el.value` belongs to the IME) —
+  for text fields and OTP slots alike.
+- SSR: importing `./dom` touches no globals; `attach*` returns a no-op detach when
+  `isBrowser()` is false.
+
+## Svelte adapter
+
+`@zealakit/pattern-input-svelte` ships store-shaped factories, Svelte actions, and `.svelte`
+components, built with `svelte-package`.
+
+- `createNumberInput(getOptions)` / `createMaskedInput(getOptions)` / `createOtpInput(getOptions)`
+  create the controller once and expose a readable store (`subscribe`) plus `value()`,
+  `formattedValue()`, `status()`, `getInputProps()` (or the OTP getters), `setValue`, `clear`,
+  `focus`, `undo`, `redo`, `setOptions`, `sync()` and `attach(node)`.
+- `fieldAction`, `otpGroupAction` and `otpSlotAction` are Svelte actions: they attach the DOM
+  binding and detach on destroy. `otpSlotAction` registers a slot input by index in the field's
+  registry (`use:otpSlotAction={{ field, index }}`).
+- The getters read controller state imperatively, so Svelte does not re-run them on its own:
+  components subscribe with `$field` / `fromStore(field)` inside `$derived.by` (aria-invalid,
+  aria-describedby, roving tabindex). Do the same in templates that call getters directly.
+- `InputOTP` is a compound component (`InputOTP.Group`, `.Slot`, `.Separator`; also exported by
+  name). The root sets context and renders the group plus the hidden input; slots read the field
+  from context.
+- Components (`NumberInput`, `MaskedInput`, `InputOTP`) accept `bind:value`-friendly props and an
+  `onchange` callback with the full `ValueChange`; they call `field.sync()` in `$effect.pre` so
+  option changes land before the DOM update. On the server only they render the initial formatted
+  text as a `value` attribute.
+- `getInputProps()` never includes `value` (D5).
+
+## Vue adapter
+
+`@zealakit/pattern-input-vue` uses composables plus render-function components (no SFCs in the package).
+
+- `useNumberInput` / `useMaskedInput` / `useOtpInput` take the options as
+  `MaybeRefOrGetter`; a `watch(..., { flush: "sync", immediate: true })` pushes them to
+  `controller.setOptions`, so a controlled approval lands in the same tick. The controller is kept
+  in a plain variable (never wrapped in a reactive proxy); state is a `shallowRef` fed by
+  `controller.subscribe`.
+- State is exposed as functions (`value()`, `formattedValue()`, `status()`) plus computed state;
+  `inputRef` is a function ref (attached on element, detached on `null` and on scope dispose).
+- `getInputProps()` returns DOM attribute names unchanged (Vue accepts them) and never binds
+  `value`.
+- Components (`NumberInput`, `MaskedInput`, `InputOTP`) support `v-model`
+  (`modelValue` + `update:modelValue`) and emit `change` with the full `ValueChange`. On the
+  server only, the component renders the initial formatted text as a `value` attribute.
+- `InputOTP` is a compound component (`InputOTP.Group`, `.Slot`, `.Separator`; also exported by
+  name; dot notation in templates needs `<script setup>`). The root provides the field and renders
+  the group plus the hidden input; slots inject it. `inheritAttrs: false` on root and slot so
+  behavior attributes win over fallthrough attrs. Slot refs come from `registry.refFor(index)`.
+- Resolved options are a `computed`, so getters do not re-resolve on every call.
+
+## React adapter
+
+`@zealakit/pattern-input-react` mirrors the vanilla behavior with hooks and thin components.
+
+- `useNumberInput`, `useMaskedInput`, `useOtpInput` create the controller once
+  (`useState`/`useRef`), push options through `controller.setOptions` in a layout effect (a plain
+  `useEffect` on the server), and read state with
+  `useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)`.
+- `getInputProps(extra?)` returns `toReactProps(...)` (camelCase), `defaultValue` with the initial
+  formatted text, and a merged `ref` that attaches/detaches the DOM binding (StrictMode-safe).
+  It **never** passes `value` (D5) — the DOM binding owns `el.value`.
+- The ref returned by `getInputProps()` keeps its identity across renders (composed refs are
+  cached per consumer ref): a new callback ref makes React detach and re-attach the DOM binding on
+  every render. The ref alone owns attach/detach — no extra unmount effect, which would break
+  React 18 StrictMode (it re-runs effects but not refs).
+- OTP: `getGroupProps()` (includes the group ref), `getSlotProps(index)` (stable
+  `registry.refFor(index)` ref and an initial `defaultValue` for SSR), `getHiddenInputProps()`.
+- `NumberInput`, `MaskedInput` render only the field's own element. `InputOTP` is a compound
+  component: `<InputOTP maxLength>` with `InputOTP.Group`, `.Slot index`, `.Separator` (also
+  exported by name for Server Component boundaries). The root renders `role="group"` plus the
+  hidden input and forwards its ref; the field owns slot behavior attributes and lets the rest
+  (className, id, ref, data-*) pass through. Separators are `aria-hidden`, never `role=separator`.
+- Controlled without `onValueChange` throws during render, matching the core contract.
+
+## Vanilla adapter
+
+`@zealakit/pattern-input-vanilla` is the reference adapter: a thin layer over the controller and
+the DOM binding, with no element creation.
+
+- `createNumberInput(el, options?)`, `createMaskedInput(el, options)`,
+  `createOtpInput(group, options)` attach to host-owned elements. The input must be a
+  `<input>` of type text/tel/search (default type qualifies), else `PatternInputError`
+  `UNSUPPORTED_ELEMENT`. Without a DOM they throw `NO_DOM`.
+- Instances expose the contract names: `getInputProps()` (number/masked) or
+  `getGroupProps()`/`getSlotProps(i)`/`getHiddenInputProps()` (OTP; `slots` option may be sparse), plus
+  `value`, `formattedValue`, `status`, `setValue`, `clear`, `focus`, `undo`, `redo`,
+  `setOptions`, `subscribe`, `destroy` (OTP adds `refresh`). `setOptions` is how a controlled
+  consumer approves a proposal.
+- `applyProps` diffs getter attributes only; attributes the host set are restored on `destroy`,
+  and adapter-added ones are removed. No class or style is ever written.
+- `destroy()` detaches the DOM binding, destroys the controller, and restores attributes.
+
+## Controller and modes
+
+- `createNumberController`, `createMaskedController`, `createOtpController` (or
+  `createFieldController(binding, options)`) run a field without touching the DOM: `getState()`,
+  `subscribe()`, `dispatch()`, `handleKey()`, `setOptions()`, `setValue()`, `clear()`, `focus()`,
+  `undo()`, `redo()`, `destroy()`, plus `value` / `formattedValue` / `status` / `controlled`.
+- Controlled when a `value` key is present (for number even `null`). Controlled without
+  `onValueChange` (and not `readOnly`) throws `PatternInputError`
+  code `CONTROLLED_WITHOUT_HANDLER`.
+- Controlled edits reduce to a proposal; `getState()` keeps the approved state until `setOptions`
+  supplies the matching value, which adopts the proposal **including its caret**. Re-supplying
+  the approved value drops the proposal, so a rejected paste is never shown (AC-7). A transformed
+  value creates fresh state with the caret at the end.
+- Focus, caret and selection changes are local UI state in both modes: adopted immediately,
+  never emitted as value changes (FR-8).
+- Uncontrolled changes emit `onValueChange` once per value/status change, deduped by value.
+- History is a bounded 100-entry stack: consecutive inserts merge while within 1 s and without a
+  caret jump (`now` is injectable for deterministic tests); undo/redo restore value **and** caret.
+  In controlled mode undo/redo are proposals too.
+- `getClipboardText(state, binding, resolved)` returns the formatted substring of the selection,
+  which always parses back into the same field (FR-16).
+
+## Contract
+
+- `CONTRACT_VERSION = "1.0.0"`.
+- `GETTER_NAMES`: number/masked expose `getInputProps`; OTP exposes `getGroupProps`,
+  `getSlotProps`, `getHiddenInputProps`.
+- `INSTANCE_API`: `value`, `formattedValue`, `status`, `setValue`, `clear`, `focus`, `undo`,
+  `redo` — every adapter returns these.
+- `REACT_PROP_NAMES` + `toReactProps` map DOM-shaped getter output to React props.
+- Framework-neutral conformance vectors live in `packages/core/tests/vectors/*.json`
+  (number, masked, otp, controlled) and every adapter replays them through its own renderer.
+
+## OTP field
+
+- N single-character slots (1..32). `slots` keeps position with `""` for empty and is exactly
+  `length` long; `rawValue` compacts the gaps and `formattedValue === rawValue`. Status is
+  empty / incomplete / complete, and `invalid` only comes from the consumer `validate` on commit.
+- Insert writes the active slot and advances, clamped at the last slot. A multi-character insert
+  (autofill, mobile keyboards dumping the whole code into one field) is treated as paste.
+  Paste distributes from slot 0 when the code is at least `length` long, otherwise from the
+  active slot, truncates overflow, and leaves `activeIndex` on the last filled slot.
+- Backspace clears a filled active slot and stays; when the active slot is already empty it
+  clears the previous slot and retreats. `unit: "line"` clears everything.
+- `focusSlot` clamps to the first empty slot, so focus order survives deletion; the getters
+  expose roving `tabindex` so Tab enters and leaves the group once (FR-13).
+- Getters: `getOtpGroupProps` (`role="group"` + label/labelledBy/describedBy/`aria-invalid`),
+  `getOtpSlotProps` (inputmode, pattern, slot label, slot 0 only carries
+  `autocomplete="one-time-code"` and `maxlength = length` for autofill), and
+  `getOtpHiddenInputProps` (`type="hidden"`, `name`, `value = rawValue`) for form submission.
+
+## Masked field
+
+- `MaskedState.rawValue` holds editable characters only; literals are always re-derived by
+  `formatMasked(raw, alternative, resolved, { trailingLiterals })` against the selected
+  alternative.
+- Literal visibility: `"filled"` (default) shows literals up to the last filled slot plus the
+  literal run immediately after it while focused (`123` → `123.`); `"always"` renders the whole
+  mask with `placeholderChar`, and placeholders are not map units.
+- Status: `""` → empty, any required slot unfilled → incomplete (never invalid), all required
+  filled → complete; `invalid` comes only from the consumer `validate` on commit.
+- Insert: typing the next literal is a no-op advance, a mismatching character rejects the whole
+  insert, and at capacity a longer alternative may take the character (first match wins, so the
+  field switches patterns as the raw value grows). Paste extracts editable characters, truncates
+  at capacity, and rejects only when nothing was accepted.
+- `inputMode` defaults to `numeric` for all-digit masks (the documented reading of FR-18) and
+  `text` otherwise; the getter also emits `autocapitalize` for upper-only letter masks and
+  `maxlength` from the longest alternative. No `role`, no `placeholder`.
+
+## Number field
+
+- `NumberState.rawText` is canonical editing text with `.` as the decimal: `""`, `"-"`, `"12."`,
+  `"1.50"` survive while typing. `rawValue` and `formattedValue` are derived from it, and
+  `formatNumber` returns `{ text, map }` where every rawText character is exactly one map unit.
+- `resolveNumberOptions` is cached per options identity; it resolves separators from `locale`
+  once via `Intl.NumberFormat(...).formatToParts`, and explicit `decimalSeparator` /
+  `groupSeparator` (`""` disables grouping) win. Reducers and getters take the resolved object.
+- Reducer rules: over-precision keystrokes are rejected with the identical state (never rounded
+  while typing), typing the locale decimal or `.` inserts the decimal, `-` toggles the sign,
+  paste is lexed then validated with one documented separator-swap retry, and composition
+  defers every text change to `composeEnd`.
+- Commit (Enter/blur) normalizes (`"-"`/`"12."` → `""`/`"12"`), rounds per `rounding`, pads to
+  `minimumFractionDigits`, clamps per `clampBehavior` (`"none"` keeps the value and marks
+  `invalid` with reason `"range"`), then runs the consumer `validate`. A rejected event returns
+  the same state object (NFR-3).
+- `getNumberInputProps` emits `type`, `inputmode`, `autocomplete`, `autocorrect`, `spellcheck`,
+  `enterkeyhint`, and optional `aria-invalid` / `aria-describedby` / `aria-required` /
+  `disabled` / `readonly`. It never emits `role`, and `aria-invalid` only appears for a real
+  invalid state (never for incomplete).
+
+## Mask grammar
+
+Frozen for v1 — adding a form requires a BRD change:
+
+| Pattern char | Meaning |
+| --- | --- |
+| `9` | digit `[0-9]` |
+| `a` | ASCII letter `[A-Za-z]` |
+| `*` | ASCII letter or digit |
+| custom key | from the `tokens` option: `{ test: RegExp; transform?: "upper" \| "lower" }`, single-character match |
+| `\x` | literal `x` |
+| `[...]` | enclosed slots are optional (the field is complete without them) |
+| `{n}` / `{n,m}` after a token | repeat; `{n,}` is greedy up to the 64-slot cap |
+| anything else | literal |
+
+`compileMask` is the only throwing entry point (`MaskPatternError` with `patternIndex`,
+`offset`, `reason`); it runs once at option resolution. `fitRaw` ignores literals in the raw
+input, rejects at the first character no slot accepts, and reports `rejectedAt` when the raw
+input is longer than the capacity. `selectAlternative` takes the first fully matching pattern
+(FR-21), else the first that still has capacity. `extractRaw` keeps only editable characters,
+which is what makes paste work (FR-15).
+
+The number lexer (`lexNumber`) is explicit-syntax only: group separators are skipped anywhere,
+the decimal separator is accepted once, a sign only at the start (`-`, `−`, or a dropped `+`),
+and ASCII digits only in v1. Ambiguity such as `1,234` vs `1.234` is decided by `syntax`, never
+guessed. All number math runs on canonical decimal strings (`decimal.ts`) so there is no
+binary-float drift; `toNumber` returns `null` beyond `Number.MAX_SAFE_INTEGER`.
+
+## Caret model
+
+- A selection is `{ anchor, focus }`, each a `StickyAnchor { offset, affinity }` counted in
+  **raw units** (`0..rawLength`) — never in formatted-string indices.
+- `affinity: "before"` sits immediately before raw unit `offset` (skipping literals to its left);
+  `"after"` sits immediately after raw unit `offset - 1`. At offset `0`, `"after"` is the start of
+  the text; at offset `n`, `"before"` is its end.
+- A formatter returns `{ text, map }`; `units[i]` is the UTF-16 `[start, end)` range of raw unit
+  `i` inside the formatted text. UTF-16 is used everywhere so the DOM binding can feed
+  `selectionStart` directly and a surrogate pair still counts as one unit.
+- `indexToAnchor` snaps an index inside a literal run to the nearest unit boundary; on a tie the
+  right-hand boundary wins (FR-14). `anchorToIndex` and `indexToAnchor` are the only legal
+  conversions between the two coordinate systems.
+- `remapAfterEdit(selection, { at, removed, inserted })`: anchors before the edit stay, anchors
+  after it shift by `inserted - removed`, anchors inside a removed range collapse to
+  `at + inserted` with `before` affinity, and an insertion exactly at an anchor respects its
+  affinity.
+- `moveCaret` maps `prev` / `next` / `start` / `end`, with optional `extend`.
+
+## Prop-getter contract
+
+Getters return plain, deterministic objects that an adapter spreads onto an element or component
+props. Same state + same options → same object; callers may call them every render.
+
+- Number / masked: `getInputProps(state, options)` — includes `inputmode`, `autocomplete`, `name`,
+  `aria-invalid` (only when invalid), `aria-describedby` (consumer-supplied ids), `spellcheck`,
+  `autocapitalize`.
+- OTP: `getGroupProps(state, options)`, `getSlotProps(state, index)`,
+  `getAggregateProps(state, options)` (a hidden input carrying the aggregate value for forms).
+- Instance API: `state`, `subscribe`, `setValue`, `setSelection`, `focus`, `blur`, `clear`,
+  `destroy`. Plans 06–11 fill the exact surface; plans 03–05 fill each field's getters.
+
+Rules: never emit `role` on a native input; `aria-invalid` reflects real invalidity only; nothing
+is announced that is not visible; the OTP group is one accessible control while its slots remain
+individually focusable.
+
+## Modes
+
+- Uncontrolled: the field owns state and emits change proposals.
+- Controlled: the consumer supplies `value` and receives proposals; the field never renders a value
+  the consumer did not approve (the only exception is a documented optimistic echo during composition).
+- Controlled without a change handler is an error, never a silent uncontrolled fallback.
+
+## DOM binding
+
+One implementation for every adapter: `beforeinput` (primary) with `input` fallback,
+`compositionstart/update/end`, `keydown` mapping, `paste`/`cut`/`copy`, `selectionchange`/
+`pointerup`, focus/blur, and an adapter-owned undo stack. It is the only writer of `el.value` and
+selection; framework adapters never bind `value` reactively.
+
+## Plan map
+
+| Plan | Area | Status |
+| --- | --- | --- |
+| 00 | workspace, tooling, empty packages, scripts, agents | done |
+| 01 | core foundations: types, editable map, sticky caret, key normalization | done |
+| 02 | core lexers: mask grammar, number lexer, decimal math | done |
+| 03 | number field: options, format/parse, reducer, keymap, getters | done |
+| 04 | masked field | done |
+| 05 | OTP field | done |
+| 06 | controller, contract constants, conformance vectors | done |
+| 07 | `./dom` binding | done |
+| 08–11 | vanilla / React / Vue / Svelte adapters | all done |
+| 12 | examples, Playwright e2e, a11y audit | done |
+| 13 | release gates: package/size/SSR checks, READMEs, skills | done |
+
+## Release gates (plan 13)
+
+- `pnpm size` — esbuild gzip budget per adapter × field (current ceiling 10 kB; the original 6 kB
+  target was not reachable with the shared controller+kernel, numbers are recorded in the READMEs).
+- `pnpm pack:packages` — four adapter tarballs with core vendored at `dist/vendor/core/`.
+- `node scripts/check-packages.mjs` — manifest, tarball contents, and DOM-free import checks.
+- `pnpm release:check` — the full chain; `pnpm npm:publish:check` adds the publish dry run.
+- `pnpm e2e` — Playwright against all five examples (not part of `pnpm check`).
+
+## Hard boundaries (short list)
+
+No CSS/classes/themes; no validation engine; never wrap a plain-text input; no speculative
+exports; SSR-safe imports; IME commits once; core pure entry stays DOM-free; adapters never import
+other adapters; `type` aliases and `.js` specifiers; one commit per plan, no AI co-author trailer.
+
+## Hardening rules
+
+- Text from outside (paste, autofill, `setValue`) is capped at `MAX_INPUT_CHARS` before any
+  scanning; never add a code path that walks unbounded input.
+- Single-character slots must normalize every entry path, including `composeEnd`.
+- Controlled proposals are deduped against the **approved** value, not against the last emitted
+  one — otherwise a rejected proposal can never be proposed again.
+- Resolve expensive option parts once: locale separators are memoized; do not call `Intl` per
+  render.
+- Any new reactive adapter must prove that getters re-run when state changes (aria-invalid).

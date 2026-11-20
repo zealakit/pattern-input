@@ -1,0 +1,84 @@
+[
+  {
+    "name": "AC-5 paste 6 digits fills the slots and focuses the last",
+    "field": "otp",
+    "options": { "length": 6 },
+    "steps": [{ "event": { "type": "paste", "text": "123456" } }],
+    "expect": {
+      "value": "123456",
+      "formattedValue": "123456",
+      "status": "complete",
+      "caret": 5,
+      "changes": 1
+    }
+  },
+  {
+    "name": "insert advances the active slot",
+    "field": "otp",
+    "options": { "length": 6 },
+    "steps": [{ "typeText": "12" }],
+    "expect": {
+      "value": "12",
+      "status": "incomplete",
+      "caret": 2,
+      "changes": 2
+    }
+  },
+  {
+    "name": "backspace clears the active slot",
+    "field": "otp",
+    "options": { "length": 6 },
+    "steps": [{ "typeText": "1" }, { "key": { "key": "Backspace" } }],
+    "expect": { "value": "", "status": "empty", "caret": 0, "changes": 2 }
+  },
+  {
+    "name": "multi-character insert behaves as autofill paste",
+    "field": "otp",
+    "options": { "length": 6 },
+    "steps": [{ "event": { "type": "insert", "text": "123456" } }],
+    "expect": {
+      "value": "123456",
+      "status": "complete",
+      "caret": 5,
+      "changes": 1
+    }
+  },
+  {
+    "name": "non-digit rejected in numeric mode",
+    "field": "otp",
+    "options": { "length": 4 },
+    "steps": [{ "typeText": "a" }],
+    "expect": { "value": "", "status": "empty", "changes": 0 }
+  },
+  {
+    "name": "alphanumeric upper transform",
+    "field": "otp",
+    "options": { "length": 4, "type": "alphanumeric", "transform": "upper" },
+    "steps": [{ "typeText": "ab" }],
+    "expect": { "value": "AB", "caret": 2, "changes": 2 }
+  },
+  {
+    "name": "deleting a middle slot compacts raw and focus survives",
+    "field": "otp",
+    "options": { "length": 6 },
+    "steps": [
+      { "typeText": "123" },
+      { "event": { "type": "focusSlot", "index": 1 } },
+      { "event": { "type": "delete", "direction": "forward", "unit": "char" } },
+      { "event": { "type": "focusSlot", "index": 5 } }
+    ],
+    "expect": {
+      "value": "13",
+      "status": "incomplete",
+      "caret": 1,
+      "changes": 4
+    }
+  },
+  {
+    "name": "reset clears every slot",
+    "field": "otp",
+    "options": { "length": 4 },
+    "steps": [{ "typeText": "1234" }, { "event": { "type": "reset" } }],
+    "expect": { "value": "", "status": "empty", "caret": 0, "changes": 5 }
+  }
+]
