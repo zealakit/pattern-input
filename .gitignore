@@ -35,3 +35,6 @@ artifacts/
 
 # Workflow (zlak-flow keeps its own state here)
 .zlak-flow/
+
+# Playwright browsers (workspace-local when the global cache is read-only)
+.playwright/

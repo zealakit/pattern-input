@@ -2,13 +2,15 @@
   "name": "@zealakit/pattern-input-e2e",
   "version": "1.0.0-beta.1",
   "private": true,
-  "description": "Private Playwright workspace for real-browser checks of the pattern-input adapters (plan 12 fills the specs).",
+  "description": "Private Playwright workspace for real-browser checks of the pattern-input adapters.",
   "type": "module",
   "scripts": {
-    "test": "playwright test --pass-with-no-tests",
+    "build:fixtures": "pnpm -w --filter './packages/*' run build && pnpm -w --filter './examples/*' run build",
+    "test": "pnpm run build:fixtures && playwright test",
     "install:browsers": "playwright install --with-deps chromium firefox webkit"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.50.0"
   }
 }

@@ -3,15 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@zealakit/pattern-input-vanilla</title>
+    <title>Pattern Input — vanilla</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 44rem; }
+      label { display: block; margin-top: 1rem; font-weight: 600; }
+      input { font: inherit; padding: 0.35rem 0.5rem; }
+      small { display: block; color: #555; }
+      .error { color: #b00020; }
+      .row { margin-bottom: 1rem; }
+    </style>
   </head>
   <body>
-    <main>
-      <h1>@zealakit/pattern-input-vanilla</h1>
-      <p>Placeholder example. Field demos land in plan 12.</p>
-      <input id="field" type="text" aria-label="Pattern input placeholder" />
-      <p id="status" role="status"></p>
-    </main>
+    <h1>Pattern Input — vanilla</h1>
+
+    <div class="row">
+      <label for="price">Price</label>
+      <input id="price" data-testid="price" />
+      <small>Grouping and two fraction digits.</small>
+    </div>
+
+    <div class="row">
+      <label for="price-de">Price (de-DE)</label>
+      <input id="price-de" data-testid="price-de" />
+      <small>Locale separators: 1.234,56.</small>
+    </div>
+
+    <div class="row">
+      <label for="tax">Tax id</label>
+      <input id="tax" data-testid="tax" />
+      <small>Mask 999.999.999-99.</small>
+    </div>
+
+    <div class="row">
+      <label for="phone">Phone</label>
+      <input id="phone" data-testid="phone" />
+      <small>Alternatives: local or international.</small>
+    </div>
+
+    <form id="form" class="row">
+      <label for="code-0">Verification code</label>
+      <div id="code" data-testid="code" role="group" aria-label="Verification code">
+        <input id="code-0" data-testid="code-slot-0" />
+        <input data-testid="code-slot-1" />
+        <input data-testid="code-slot-2" />
+        <input data-testid="code-slot-3" />
+        <input data-testid="code-slot-4" />
+        <input data-testid="code-slot-5" />
+      </div>
+      <small>Paste a six-digit code into the first slot.</small>
+      <button type="submit">Submit</button>
+    </form>
+
+    <div class="row">
+      <label for="controlled">Controlled price (max 1000)</label>
+      <input id="controlled" data-testid="controlled" />
+      <small>Pastes above 1000 are rejected.</small>
+    </div>
+
+    <div class="row">
+      <label for="invalid">Invalid field</label>
+      <input id="invalid" data-testid="invalid" aria-describedby="invalid-error" />
+      <small id="invalid-error" class="error" data-testid="invalid-error"></small>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
