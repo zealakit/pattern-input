@@ -95,10 +95,10 @@ export function attachInput<
   };
 
   const onBeforeInput = (event: Event): void => {
-    if (guard.applying || composition.active) {
+    const input = event as InputEvent;
+    if (guard.applying || composition.active || input.isComposing) {
       return;
     }
-    const input = event as InputEvent;
     const inputType = input.inputType ?? "";
 
     if (inputType === "historyUndo") {
@@ -128,8 +128,12 @@ export function attachInput<
     render();
   };
 
-  const onInput = (): void => {
-    if (guard.applying || composition.active) {
+  const onInput = (event: Event): void => {
+    if (
+      guard.applying ||
+      composition.active ||
+      (event as InputEvent).isComposing
+    ) {
       return;
     }
     const next = el.value;
