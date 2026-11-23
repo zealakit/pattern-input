@@ -7,11 +7,7 @@ export type {
   StickyAnchor,
   StickySelection,
 } from "./types.js";
-export type {
-  EditableMap,
-  EditableUnit,
-  IndexBias,
-} from "./editable-map.js";
+export type { EditableMap, EditableUnit, IndexBias } from "./editable-map.js";
 export {
   anchorToIndex,
   indexToAnchor,

@@ -25,5 +25,9 @@
     "**/*.vue",
     "**/.playwright",
     "**/artifacts"
-  ]
+  ],
+  "endOfLine": "lf",
+  "sortPackageJson": false,
+  "sortImports": false,
+  "sortTailwindcss": false
 }

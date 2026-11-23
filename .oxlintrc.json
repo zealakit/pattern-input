@@ -1,20 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "react",
-    "react-hooks",
-    "jsx-a11y"
-  ],
+  "plugins": ["typescript", "react", "react-hooks", "jsx-a11y"],
   "categories": {
     "correctness": "error"
   },
   "rules": {
     "typescript/no-explicit-any": "error",
-    "typescript/consistent-type-definitions": [
-      "error",
-      "type"
-    ],
+    "typescript/consistent-type-definitions": ["error", "type"],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "react/no-array-index-key": "error",
@@ -48,11 +40,7 @@
   ],
   "overrides": [
     {
-      "files": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "**/tests/**"
-      ],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/tests/**"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
         "react/no-array-index-key": "off",
@@ -62,18 +50,13 @@
       }
     },
     {
-      "files": [
-        "packages/react/src/components/otp-input.tsx"
-      ],
+      "files": ["packages/react/src/components/otp-input.tsx"],
       "rules": {
         "react/no-array-index-key": "off"
       }
     },
     {
-      "files": [
-        "packages/vue/**",
-        "examples/vue/**"
-      ],
+      "files": ["packages/vue/**", "examples/vue/**"],
       "rules": {
         "react-hooks/rules-of-hooks": "off"
       }
