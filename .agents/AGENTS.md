@@ -45,7 +45,10 @@ pnpm install
 pnpm build        # builds packages in topological order (build core first)
 pnpm typecheck    # requires a successful build (adapters resolve core from dist)
 pnpm test         # core + vanilla + react + vue + svelte tests (Node test runner + happy-dom)
-pnpm lint         # Biome
+pnpm lint         # oxlint
+pnpm lint:fix     # oxlint --fix
+pnpm format       # oxfmt
+pnpm format:check # oxfmt --check
 pnpm check        # build + typecheck + test + lint
 pnpm clean        # remove package/example build output and local tarballs
 pnpm pack:packages # pack the four adapter tarballs, core bundled in, into artifacts/ (no publish)
@@ -92,6 +95,9 @@ pnpm monitor      # dependency dashboard at http://127.0.0.1:4177
   separate copies still share it. Never document core as an install or configuration entry point.
 - **No styles, no validation engine:** no CSS, class names, themes, or design tokens; no bundled
   schema validator (consumer callbacks only). Never wrap or replace a plain-text `<input>`.
+- **Lint suppressions:** use `// oxlint-disable-next-line <rule> -- reason` (or a block
+  `oxlint-disable`/`oxlint-enable` pair) and always state why. A suppression without a reason is
+  a review blocker; fix the finding instead when it is genuinely ours.
 - **Tests:** new primitives need focused tests in the owning package (`packages/*/tests/`); run
   `pnpm test`. Do not add a second test framework or DOM library.
 - **SSR safety:** never touch `window`, `document`, `navigator`, or `matchMedia` during module

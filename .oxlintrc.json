@@ -1,0 +1,82 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "react",
+    "react-hooks",
+    "jsx-a11y"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-definitions": [
+      "error",
+      "type"
+    ],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/no-array-index-key": "error",
+    "react/jsx-no-useless-fragment": "warn",
+    "no-unused-vars": "error",
+    "no-unsafe-optional-chaining": "error",
+    "no-cond-assign": "error",
+    "no-return-assign": "error",
+    "array-callback-return": "error",
+    "jsx-a11y/role-supports-aria-props": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/no-aria-hidden-on-focusable": "error",
+    "jsx-a11y/no-interactive-element-to-noninteractive-role": "error",
+    "jsx-a11y/prefer-tag-over-role": "error",
+    "jsx-a11y/no-noninteractive-tabindex": "error",
+    "jsx-a11y/interactive-supports-focus": "error",
+    "react/refs": "off",
+    "react/immutability": "off"
+  },
+  "ignorePatterns": [
+    "**/dist",
+    "**/node_modules",
+    "**/.svelte-kit",
+    "**/.next",
+    "**/*.tsbuildinfo",
+    "**/e2e/test-results",
+    "**/e2e/playwright-report",
+    "artifacts/**",
+    ".playwright/**"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/tests/**"
+      ],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react/no-array-index-key": "off",
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "jsx-a11y/no-noninteractive-tabindex": "off",
+        "jsx-a11y/interactive-supports-focus": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/react/src/components/otp-input.tsx"
+      ],
+      "rules": {
+        "react/no-array-index-key": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/vue/**",
+        "examples/vue/**"
+      ],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
+}

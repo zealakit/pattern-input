@@ -39,9 +39,9 @@
     "build:svelte": "pnpm --filter @zealakit/pattern-input-svelte run build",
     "typecheck": "pnpm -r --filter './packages/*' run typecheck",
     "test": "pnpm --filter @zealakit/pattern-input-core run test && pnpm --filter @zealakit/pattern-input-vanilla run test && pnpm --filter @zealakit/pattern-input-react run test && pnpm --filter @zealakit/pattern-input-vue run test && pnpm --filter @zealakit/pattern-input-svelte run test",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
     "check": "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
     "clean": "pnpm -r exec rm -rf dist .next && rm -rf artifacts",
     "dev:vanilla": "pnpm --filter @zealakit/pattern-input-vanilla-example run dev",
@@ -60,12 +60,14 @@
     "npm:publish:vue": "node --strip-types scripts/npm-publish.ts vue",
     "npm:publish:svelte": "node --strip-types scripts/npm-publish.ts svelte",
     "npm:publish:all": "node --strip-types scripts/npm-publish.ts all",
-    "size": "node scripts/check-size.mjs"
+    "size": "node scripts/check-size.mjs",
+    "format:check": "oxfmt --check"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.8",
     "@types/node": "^24.19.0",
-    "typescript": "^6.0.3",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
+    "typescript": "^6.0.3"
   }
 }

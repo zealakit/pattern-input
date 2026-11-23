@@ -246,7 +246,7 @@ Everything the agent reads comes from `buildPrompt()`. This table maps each bloc
 | Opening line | “senior monorepo dependency-upgrade engineer working on the Zealakit Pattern Input repository” | New repo name and role |
 | Repository + architecture bullets | framework-agnostic core, adapters depend on core with `workspace:*`, core has no framework deps | The dependency-direction rules the agent must preserve |
 | `publishedPackageList()` | names from `/api/packages`, fallback list of the five `@zealakit/*` packages | Replace the fallback array with the port’s package set |
-| Tooling stack bullet | TypeScript/ESM, Biome, React/Vue/Svelte peers, Astro/Next.js/Vite | Host framework, build tool, type checker, formatter, test runner |
+| Tooling stack bullet | TypeScript/ESM, oxlint/oxfmt, React/Vue/Svelte peers, Next.js/Vite | Host framework, build tool, type checker, formatter, test runner |
 | Session mode line | derived from `mode` (`advisory only` vs `auto-upgrade`) | Keep as-is; it is what distinguishes the two prompts |
 | Inventory table | 14 columns from server rows | Keep unless you change the row shape in `server.ts` |
 | Required investigation | 9 checks tuned to pattern-input/framework peers | Replace framework/CDN specifics with the port’s real risks |
