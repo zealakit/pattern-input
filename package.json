@@ -42,7 +42,8 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
-    "check": "pnpm build && pnpm typecheck && pnpm test && pnpm lint",
+    "format:check": "oxfmt --check",
+    "check": "pnpm build && pnpm typecheck && pnpm test && pnpm lint && pnpm format:check",
     "clean": "pnpm -r exec rm -rf dist .next && rm -rf artifacts",
     "dev:vanilla": "pnpm --filter @zealakit/pattern-input-vanilla-example run dev",
     "dev:react": "pnpm --filter @zealakit/pattern-input-react-example run dev",
@@ -60,8 +61,7 @@
     "npm:publish:vue": "node --strip-types scripts/npm-publish.ts vue",
     "npm:publish:svelte": "node --strip-types scripts/npm-publish.ts svelte",
     "npm:publish:all": "node --strip-types scripts/npm-publish.ts all",
-    "size": "node scripts/check-size.mjs",
-    "format:check": "oxfmt --check"
+    "size": "node scripts/check-size.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.19.0",

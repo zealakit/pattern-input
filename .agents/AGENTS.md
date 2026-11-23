@@ -49,7 +49,7 @@ pnpm lint         # oxlint
 pnpm lint:fix     # oxlint --fix
 pnpm format       # oxfmt
 pnpm format:check # oxfmt --check
-pnpm check        # build + typecheck + test + lint
+pnpm check        # build + typecheck + test + lint + format check
 pnpm clean        # remove package/example build output and local tarballs
 pnpm pack:packages # pack the four adapter tarballs, core bundled in, into artifacts/ (no publish)
 pnpm size         # esbuild gzip budget per adapter × field
@@ -118,7 +118,7 @@ pnpm monitor      # dependency dashboard at http://127.0.0.1:4177
 
 ## Definition of done
 
-`pnpm check` (build + typecheck + test + lint), `pnpm readme:check`, and `pnpm pack:packages`
+`pnpm check` (build + typecheck + test + lint + format check), `pnpm readme:check`, and `pnpm pack:packages`
 pass. Examples still build (and the Next.js example builds for SSR) against the local workspace
 packages. Update this file and the [skill](skills/pattern-input/SKILL.md) when boundaries,
 commands, or workflows change.
