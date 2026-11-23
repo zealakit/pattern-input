@@ -2,7 +2,7 @@
 
 [English](https://github.com/zealakit/pattern-input/blob/main/packages/react/README.md) | [Tiếng Việt](https://github.com/zealakit/pattern-input/blob/main/packages/react/README_VI.md) | [中文](https://github.com/zealakit/pattern-input/blob/main/packages/react/README_CN.md)
 
-![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg)
+![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
 
 Hook và component mỏng cho field number, masked và one-time-code trong React 18 và 19.
 
