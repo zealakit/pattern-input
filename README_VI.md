@@ -61,10 +61,10 @@ Min+gzip cho từng adapter × field, đo bằng esbuild (`pnpm size`):
 
 | Adapter | Number | Masked | OTP |
 | --- | --- | --- | --- |
-| vanilla | 8.3 kB | 7.4 kB | 4.9 kB |
-| react | 8.4 kB | 7.5 kB | 5.0 kB |
-| vue | 8.2 kB | 7.3 kB | 4.8 kB |
-| svelte | 8.1 kB | 7.2 kB | 6.2 kB |
+| vanilla | 8.3 kB | 7.3 kB | 5.2 kB |
+| react | 8.5 kB | 7.5 kB | 5.4 kB |
+| vue | 8.2 kB | 7.2 kB | 5.2 kB |
+| svelte | 8.1 kB | 7.1 kB | 6.7 kB |
 
 ## Examples
 
