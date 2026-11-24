@@ -8,13 +8,14 @@ import {
   useMaskedInput,
   useNumberInput,
 } from "@zealakit/pattern-input-react";
+import type { ValueChange } from "@zealakit/pattern-input-react";
 
 function ControlledPrice() {
   const [value, setValue] = useState<number | null>(null);
   const field = useNumberInput({
     value,
     maximumFractionDigits: 2,
-    onValueChange: (change) => {
+    onValueChange: (change: ValueChange<number | null>) => {
       if (change.value !== null && change.value > 1000) {
         return;
       }
