@@ -2,10 +2,10 @@
 /**
  * G1 `check:engine-usage` — pattern-input variant (00-foundation-2 §1, X10).
  *
- * pattern-input does not use `@zealakit/ui-engine` (X10): it has no ids, no live
- * region and no page-global state. This guard therefore enforces the **duplicate**
- * and **source** rules only, with no manifest-peer rule, so the repo cannot grow
- * a local copy of engine-owned behaviour later.
+ * X10 was revised by plan 04: pattern-input now imports the engine's composition
+ * guard (`createCompositionGuard`, `isImeComposing`) from `/keyboard`, so the
+ * normal manifest rules apply — the engine is a **peer** in each adapter and a
+ * dev link everywhere, never a `dependencies` entry.
  *
  * It fails when a package:
  *  - defines or reads its own `getGlobalState`, or a `Symbol.for("@zealakit/...`
@@ -101,14 +101,22 @@ for (const name of PACKAGES) {
   }
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 
-  // X10: pattern-input needs no engine. Any declaration of it is a mistake.
-  for (const field of ["dependencies", "peerDependencies", "devDependencies"]) {
-    if (manifest[field]?.[ENGINE] !== undefined) {
-      fail(
-        "X10",
-        `${name}: declares ${ENGINE} in ${field}; pattern-input does not use the engine`,
-      );
-    }
+  // NS1 (spec §2.2, X10 revised by plan 04): the engine is a peer in an
+  // adapter plus a dev link everywhere, never a `dependencies` entry.
+  if (manifest.dependencies?.[ENGINE] !== undefined) {
+    fail("NS1", `${name}: lists ${ENGINE} in dependencies; it must be a peer`);
+  }
+  const usesEngine = walk(path.join(packageDir, "src")).some(
+    (file) =>
+      /\.(ts|tsx|js|svelte|vue)$/.test(file) &&
+      readFileSync(file, "utf8").includes(ENGINE),
+  );
+  if (
+    usesEngine &&
+    manifest.private !== true &&
+    manifest.peerDependencies?.[ENGINE] === undefined
+  ) {
+    fail("NS1", `${name}: imports ${ENGINE} but has no peerDependencies entry`);
   }
 
   for (const file of walk(path.join(packageDir, "src")).filter((candidate) =>

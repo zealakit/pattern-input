@@ -49,13 +49,15 @@
     "@zealakit/pattern-input-core": "workspace:^"
   },
   "peerDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.0.0",
+    "@zealakit/ui-engine": "^1.0.0-beta.1"
   },
   "devDependencies": {
     "@sveltejs/package": "^3.0.2",
     "happy-dom": "^21.0.4",
     "svelte": "^5.57.3",
-    "svelte-check": "^4.7.8"
+    "svelte-check": "^4.7.8",
+    "@zealakit/ui-engine": "link:../../../ui-engine"
   },
   "scripts": {
     "build": "rm -rf dist && svelte-package -i src -o dist",

@@ -1,6 +1,9 @@
 import type { FieldController } from "../controller/controller.js";
 import type { KeyPlatform } from "../shared/index.js";
-import { createCompositionTracker } from "./composition.js";
+import {
+  createCompositionGuard,
+  isImeComposing,
+} from "@zealakit/ui-engine/keyboard";
 import { isBrowser, platform } from "./env.js";
 import { mapInputType } from "./input-events.js";
 import { paintInput, type RenderGuard } from "./render.js";
@@ -62,7 +65,16 @@ export function attachInput<
   }
 
   const guard: RenderGuard = { applying: false };
-  const composition = createCompositionTracker();
+  // E30/E31: the engine owns the one definition of "composing", including the
+  // just-ended window Safari needs before the committing Enter.
+  const composition = createCompositionGuard(el, {
+    onStart: () => dispatch({ type: "composeStart" }),
+    onUpdate: (text) => dispatch({ type: "composeUpdate", text }),
+    onEnd: (text) => {
+      dispatch({ type: "composeEnd", text });
+      render();
+    },
+  });
   const keyPlatform = options.platform ?? platform();
   const listeners: Listener[] = [];
   let lastText = el.value;
@@ -83,7 +95,7 @@ export function attachInput<
 
   const render = (): void => {
     // While composing, the browser owns the text: repainting would destroy it.
-    if (composition.active) {
+    if (composition.composing) {
       return;
     }
     const view = controller.getView();
@@ -101,7 +113,7 @@ export function attachInput<
 
   const onBeforeInput = (event: Event): void => {
     const input = event as InputEvent;
-    if (guard.applying || composition.active || input.isComposing) {
+    if (guard.applying || composition.composing || input.isComposing) {
       return;
     }
     const inputType = input.inputType ?? "";
@@ -136,7 +148,7 @@ export function attachInput<
   const onInput = (event: Event): void => {
     if (
       guard.applying ||
-      composition.active ||
+      composition.composing ||
       (event as InputEvent).isComposing
     ) {
       return;
@@ -156,27 +168,14 @@ export function attachInput<
     render();
   };
 
-  const onCompositionStart = (): void => {
-    composition.start();
-    dispatch({ type: "composeStart" });
-  };
-
-  const onCompositionUpdate = (event: Event): void => {
-    const data = (event as CompositionEvent).data ?? "";
-    composition.update(data);
-    dispatch({ type: "composeUpdate", text: data });
-  };
-
-  const onCompositionEnd = (event: Event): void => {
-    const data = (event as CompositionEvent).data ?? "";
-    composition.end();
-    dispatch({ type: "composeEnd", text: data });
-    render();
-  };
-
   const onKeyDown = (event: Event): void => {
     const key = event as KeyboardEvent;
-    if (key.isComposing || key.keyCode === 229) {
+    // E30/E31: composing, Safari's 229, and the key that follows compositionend.
+    if (
+      composition.composing ||
+      isImeComposing(key) ||
+      composition.justEnded(key)
+    ) {
       return;
     }
     const handled = controller.handleKey(
@@ -245,17 +244,14 @@ export function attachInput<
   };
 
   const onBlur = (): void => {
-    // A blur ends any open composition; the controller commits it on `blur`.
-    composition.end();
+    // The guard's own blur listener ends an open composition (one commit); this
+    // one only reports the focus change.
     dispatch({ type: "blur" });
     render();
   };
 
   on(el, "beforeinput", onBeforeInput);
   on(el, "input", onInput);
-  on(el, "compositionstart", onCompositionStart);
-  on(el, "compositionupdate", onCompositionUpdate);
-  on(el, "compositionend", onCompositionEnd);
   on(el, "keydown", onKeyDown);
   on(el, "paste", onPaste);
   on(el, "copy", onCopy);
