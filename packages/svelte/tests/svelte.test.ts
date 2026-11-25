@@ -289,3 +289,16 @@ test("vectors(svelte): all vectors pass through the factories", () => {
     }
   }
 });
+
+test("factory options reset to their defaults when set back to undefined", () => {
+  let disabled: boolean | undefined = true;
+  const field = createNumberInput(() =>
+    disabled === undefined ? {} : { disabled },
+  );
+  assert.equal(field.getInputProps().disabled, true);
+
+  disabled = undefined;
+  field.sync();
+
+  assert.ok(!field.getInputProps().disabled);
+});
