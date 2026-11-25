@@ -1,12 +1,13 @@
 {
-  "note": "APG rows (00-foundation-3 \u00a74). status: covered | todo; owner is the plan that fills a todo row.",
+  "note": "APG rows (00-foundation-3 §4). status: covered | todo; owner is the plan that fills a todo row.",
   "rows": [
     {
       "component": "number-input",
       "behaviour": "Up/Down step by step, PageUp/PageDown by a larger step",
       "keys": "ArrowUp",
-      "status": "todo",
-      "owner": "02"
+      "status": "covered",
+      "owner": "02",
+      "test": "packages/core/tests/apg-keys.test.ts :: [APG-spinbutton] Up/Down step by step, PageUp/PageDown by the larger step"
     },
     {
       "component": "number-input",
@@ -19,8 +20,9 @@
       "component": "masked-input",
       "behaviour": "Typing a separator jumps the caret over it",
       "keys": "any",
-      "status": "todo",
-      "owner": "02"
+      "status": "covered",
+      "owner": "02",
+      "test": "packages/core/tests/apg-keys.test.ts :: [APG-masked-1] typing the separator does not duplicate it"
     },
     {
       "component": "masked-input",
@@ -33,8 +35,9 @@
       "component": "otp-input",
       "behaviour": "Arrow keys and Backspace move between slots",
       "keys": "ArrowLeft",
-      "status": "todo",
-      "owner": "02"
+      "status": "covered",
+      "owner": "02",
+      "test": "packages/core/tests/apg-keys.test.ts :: [APG-otp-1] ArrowLeft/ArrowRight move between slots and Backspace steps back"
     },
     {
       "component": "phone-input",

@@ -16,7 +16,7 @@
     {
       "adapter": "svelte",
       "behaviour": "Server render svelte markup, then hydrate: zero warnings and identical ids/aria",
-      "status": "todo",
+      "status": "covered",
       "owner": "02"
     },
     {
