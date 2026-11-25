@@ -90,7 +90,9 @@ export function createOtpInput(
       ));
 
   const attached = attachOtpGroup(group, controller, getSlots, {
-    hiddenInput: options.hiddenInput,
+    ...(options.hiddenInput === undefined
+      ? {}
+      : { hiddenInput: options.hiddenInput }),
   });
 
   const tracked = new WeakMap<Element, Tracked>();
