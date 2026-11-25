@@ -1,0 +1,47 @@
+{
+  "note": "APG rows (00-foundation-3 \u00a74). status: covered | todo; owner is the plan that fills a todo row.",
+  "rows": [
+    {
+      "component": "number-input",
+      "behaviour": "Up/Down step by step, PageUp/PageDown by a larger step",
+      "keys": "ArrowUp",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "component": "number-input",
+      "behaviour": "Home/End go to the minimum and maximum",
+      "keys": "Home",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "component": "masked-input",
+      "behaviour": "Typing a separator jumps the caret over it",
+      "keys": "any",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "component": "masked-input",
+      "behaviour": "IME composition is not committed twice",
+      "keys": "compositionend",
+      "status": "covered",
+      "owner": "04"
+    },
+    {
+      "component": "otp-input",
+      "behaviour": "Arrow keys and Backspace move between slots",
+      "keys": "ArrowLeft",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "component": "phone-input",
+      "behaviour": "Paste fills every slot at once",
+      "keys": "paste",
+      "status": "todo",
+      "owner": "02"
+    }
+  ]
+}

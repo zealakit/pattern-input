@@ -1,0 +1,29 @@
+{
+  "note": "NQ11 hydration rows per adapter. The SSR-import row is covered by hydration.test.ts; hydrate-with-zero-warnings rows are todo.",
+  "rows": [
+    {
+      "adapter": "react",
+      "behaviour": "Server render react markup, then hydrate: zero warnings and identical ids/aria",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "adapter": "vue",
+      "behaviour": "Server render vue markup, then hydrate: zero warnings and identical ids/aria",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "adapter": "svelte",
+      "behaviour": "Server render svelte markup, then hydrate: zero warnings and identical ids/aria",
+      "status": "todo",
+      "owner": "02"
+    },
+    {
+      "adapter": "vanilla",
+      "behaviour": "Import the built entry with no window/document and create no page state",
+      "status": "covered",
+      "owner": "00-3"
+    }
+  ]
+}

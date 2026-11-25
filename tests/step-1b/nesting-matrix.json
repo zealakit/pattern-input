@@ -1,0 +1,17 @@
+{
+  "note": "NQ14 nesting rows. Each row names the composition and the Escape/focus rule it must hold.",
+  "rows": [
+    {
+      "composition": "Dialog > NumberInput",
+      "rule": "Escape in the field does not close the dialog while composing",
+      "status": "covered",
+      "owner": "04"
+    },
+    {
+      "composition": "Datagrid cell > MaskedInput",
+      "rule": "The grid does not steal the typing keys",
+      "status": "todo",
+      "owner": "09-2"
+    }
+  ]
+}
