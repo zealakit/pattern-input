@@ -197,7 +197,9 @@ function compileAlternative(
       compiled.push({
         kind: "slot",
         test: cloneTest(custom.test),
-        transform: custom.transform,
+        ...(custom.transform === undefined
+          ? {}
+          : { transform: custom.transform }),
         optional,
       });
       slotsUsed += 1;

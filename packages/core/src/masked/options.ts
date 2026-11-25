@@ -119,9 +119,11 @@ function resolve(options: MaskedOptions): ResolvedMaskedOptions {
     showLiterals,
     placeholderChar,
     inputMode: options.inputMode ?? (traits.allDigitSlots ? "numeric" : "text"),
-    validate: options.validate,
+    ...(options.validate === undefined ? {} : { validate: options.validate }),
     invalid: options.invalid ?? false,
-    describedBy: options.describedBy,
+    ...(options.describedBy === undefined
+      ? {}
+      : { describedBy: options.describedBy }),
     required: options.required ?? false,
     disabled: options.disabled ?? false,
     readOnly: options.readOnly ?? false,

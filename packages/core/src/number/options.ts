@@ -206,9 +206,11 @@ function resolve(options: NumberOptions): ResolvedNumberOptions {
     largeStep,
     allowNegative,
     clampBehavior: options.clampBehavior ?? "blur",
-    validate: options.validate,
+    ...(options.validate === undefined ? {} : { validate: options.validate }),
     invalid: options.invalid ?? false,
-    describedBy: options.describedBy,
+    ...(options.describedBy === undefined
+      ? {}
+      : { describedBy: options.describedBy }),
     required: options.required ?? false,
     disabled: options.disabled ?? false,
     readOnly: options.readOnly ?? false,
