@@ -43,7 +43,7 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "check": "pnpm build && pnpm typecheck && pnpm test && pnpm lint && pnpm format:check && pnpm check:engine-usage && pnpm check:dom-private && pnpm check:html-sinks && pnpm check:internal-leak && pnpm check:file-names",
+    "check": "pnpm build && pnpm typecheck && pnpm test && pnpm lint && pnpm format:check && pnpm check:engine-usage && pnpm check:dom-private && pnpm check:html-sinks && pnpm check:internal-leak && pnpm check:file-names && pnpm check:size-regression",
     "clean": "pnpm -r exec rm -rf dist .next && rm -rf artifacts",
     "dev:vanilla": "pnpm --filter @zealakit/pattern-input-vanilla-example run dev",
     "dev:react": "pnpm --filter @zealakit/pattern-input-react-example run dev",
@@ -68,7 +68,9 @@
     "check:html-sinks": "node scripts/check-html-sinks.mjs",
     "check:internal-leak": "node scripts/check-internal-leak.mjs",
     "check:file-names": "node scripts/check-file-names.mjs",
-    "check:engine-peer": "node scripts/check-engine-usage.mjs"
+    "check:engine-peer": "node scripts/check-engine-usage.mjs",
+    "check:size-regression": "node scripts/check-size-regression.mjs",
+    "size:baseline": "node scripts/check-size-regression.mjs --write"
   },
   "devDependencies": {
     "@types/node": "^24.19.0",

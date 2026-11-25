@@ -1,0 +1,17 @@
+{
+  "note": "gzip bytes of each published entry (X31). Regenerate with --write.",
+  "packages": {
+    "@zealakit/pattern-input-react": {
+      "gzip": 3195
+    },
+    "@zealakit/pattern-input-svelte": {
+      "gzip": 1690
+    },
+    "@zealakit/pattern-input-vanilla": {
+      "gzip": 2075
+    },
+    "@zealakit/pattern-input-vue": {
+      "gzip": 2857
+    }
+  }
+}
