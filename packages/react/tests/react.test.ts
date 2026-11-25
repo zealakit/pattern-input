@@ -413,3 +413,23 @@ test("vectors(react): all vectors pass through the hooks", () => {
     }
   }
 });
+
+test("InputOTP options reset to their defaults when a prop goes back to undefined", () => {
+  const view = (disabled: boolean | undefined, label: string | undefined) =>
+    h(
+      InputOTP,
+      { maxLength: 2, disabled, label },
+      h(InputOTP.Slot, { index: 0 }),
+      h(InputOTP.Slot, { index: 1 }),
+    );
+  const { container, rerender } = render(view(true, "Code"));
+  const slot = () => container.querySelector("input") as HTMLInputElement;
+  const group = () => container.firstElementChild as HTMLElement;
+  assert.equal(slot().disabled, true);
+  assert.equal(group().getAttribute("aria-label"), "Code");
+
+  rerender(view(undefined, undefined));
+
+  assert.equal(slot().disabled, false);
+  assert.equal(group().getAttribute("aria-label"), null);
+});

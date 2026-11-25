@@ -13,6 +13,7 @@ import {
   useOtpInput,
 } from "../hooks/use-otp-input.js";
 import { composeRefs } from "../utils/merge-props.js";
+import { withoutUndefined } from "../utils/without-undefined.js";
 
 const OtpContext = createContext<OtpFieldResult | null>(null);
 
@@ -62,27 +63,29 @@ const InputOTPRoot = forwardRef<HTMLDivElement, InputOTPProps>(
       ...divProps
     } = props;
 
-    const field = useOtpInput({
-      length: maxLength,
-      value,
-      defaultValue,
-      onValueChange,
-      onStatusChange,
-      devWarnings,
-      now,
-      type,
-      transform,
-      autocomplete,
-      name,
-      label,
-      labelledBy,
-      describedBy,
-      slotLabel,
-      validate,
-      invalid,
-      disabled,
-      required,
-    });
+    const field = useOtpInput(
+      withoutUndefined<OtpInputOptions>({
+        length: maxLength,
+        value,
+        defaultValue,
+        onValueChange,
+        onStatusChange,
+        devWarnings,
+        now,
+        type,
+        transform,
+        autocomplete,
+        name,
+        label,
+        labelledBy,
+        describedBy,
+        slotLabel,
+        validate,
+        invalid,
+        disabled,
+        required,
+      }),
+    );
 
     const { ref: groupRef, ...groupProps } = field.getGroupProps();
     const ref = useMemo(

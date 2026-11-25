@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "rootDir": "src",
     "outDir": "dist",
+    "exactOptionalPropertyTypes": true,
     "declaration": true,
     "noEmit": false
   },
