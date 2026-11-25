@@ -348,3 +348,26 @@ test("vectors(vue): all vectors pass through the composables", () => {
     }
   }
 });
+
+test("composable options reset to their defaults when set back to undefined", async () => {
+  const disabled = ref<boolean | undefined>(true);
+  let field: ReturnType<typeof useNumberInput> | undefined;
+  const wrapper = mount(
+    defineComponent({
+      setup() {
+        field = useNumberInput(() =>
+          disabled.value === undefined ? {} : { disabled: disabled.value },
+        );
+        return () => h("div");
+      },
+    }),
+  );
+  assert.ok(field);
+  assert.equal(field.getInputProps().disabled, true);
+
+  disabled.value = undefined;
+  await nextTick();
+
+  assert.ok(!field.getInputProps().disabled);
+  wrapper.unmount();
+});
