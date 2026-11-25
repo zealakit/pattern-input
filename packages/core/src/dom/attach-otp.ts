@@ -1,5 +1,7 @@
 import type { FieldController } from "../controller/controller.js";
 import type { OtpEvent, OtpOptions, OtpState } from "../otp/index.js";
+import { createCompositionGuard } from "@zealakit/ui-engine/keyboard";
+import type { CompositionGuard } from "@zealakit/ui-engine/keyboard";
 import { isBrowser } from "./env.js";
 import type { OtpSlotList, OtpSlotRegistry } from "./slot-registry.js";
 
@@ -32,7 +34,15 @@ export function attachOtpGroup(
 
   const getSlots = typeof source === "function" ? source : source.getSlots;
   const guard = { applying: false };
-  let composing = false;
+  /**
+   * E30/E31: the engine's guard owns composition state per slot: the boolean,
+   * the marked data and the just-ended window Safari needs before the committing
+   * Enter. `composing` here means "any slot is composing".
+   */
+  const compositions = new Map<HTMLInputElement, CompositionGuard>();
+  const detachCompositions: (() => void)[] = [];
+  const composing = (): boolean =>
+    [...compositions.values()].some((guard) => guard.composing);
   const attached = new WeakSet<HTMLInputElement>();
   const listeners: Listener[] = [];
 
@@ -74,7 +84,7 @@ export function attachOtpGroup(
 
   const render = (): void => {
     // While composing, the browser owns the slot text: repainting would destroy it.
-    if (composing) {
+    if (composing()) {
       return;
     }
     const state = controller.getState();
@@ -123,7 +133,7 @@ export function attachOtpGroup(
 
     on(slot, "beforeinput", (event) => {
       const input = event as InputEvent;
-      if (guard.applying || composing || input.isComposing) {
+      if (guard.applying || composing() || input.isComposing) {
         return;
       }
       const inputType = input.inputType ?? "";
@@ -155,7 +165,7 @@ export function attachOtpGroup(
     on(slot, "input", (event) => {
       if (
         guard.applying ||
-        composing ||
+        composing() ||
         (event as InputEvent).isComposing ||
         slot.value === ""
       ) {
@@ -166,29 +176,19 @@ export function attachOtpGroup(
       render();
     });
 
-    on(slot, "compositionstart", () => {
-      composing = true;
-      dispatch({ type: "composeStart" });
+    const composition = createCompositionGuard(slot, {
+      onStart: () => dispatch({ type: "composeStart" }),
+      onUpdate: (text) => dispatch({ type: "composeUpdate", text }),
+      onEnd: (text) => {
+        dispatch({ type: "composeEnd", text });
+        render();
+      },
     });
-
-    on(slot, "compositionupdate", (event) => {
-      dispatch({
-        type: "composeUpdate",
-        text: (event as CompositionEvent).data ?? "",
-      });
-    });
-
-    on(slot, "compositionend", (event) => {
-      composing = false;
-      dispatch({
-        type: "composeEnd",
-        text: (event as CompositionEvent).data ?? "",
-      });
-      render();
-    });
+    compositions.set(slot, composition);
+    detachCompositions.push(() => composition.destroy());
 
     on(slot, "paste", (event) => {
-      if (composing) {
+      if (composing()) {
         return;
       }
       const text =
@@ -233,7 +233,6 @@ export function attachOtpGroup(
     if (next && group.contains(next)) {
       return;
     }
-    composing = false;
     dispatch({ type: "blur" });
     render();
   });
@@ -250,6 +249,10 @@ export function attachOtpGroup(
       listener.target.removeEventListener(listener.type, listener.handler);
     }
     listeners.length = 0;
+    for (const stop of detachCompositions.splice(0)) {
+      stop();
+    }
+    compositions.clear();
   };
 
   return Object.assign(detach, { refresh: render });

@@ -16,11 +16,12 @@
   <body>
     <h1>Pattern Input — vanilla</h1>
 
-    <div class="row">
+    <form class="row" onsubmit="event.preventDefault()">
       <label for="price">Price</label>
       <input id="price" data-testid="price" />
-      <small>Grouping and two fraction digits.</small>
-    </div>
+      <small>Grouping and two fraction digits. The form makes an implicit Enter
+      submission observable, which is what the IME suite checks.</small>
+    </form>
 
     <div class="row">
       <label for="price-de">Price (de-DE)</label>
