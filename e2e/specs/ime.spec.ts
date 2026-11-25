@@ -64,8 +64,14 @@ for (const url of examples) {
     await price.click();
 
     // Synthetic on every browser: Safari fires compositionend first, then the
-    // keydown of the committing Enter. That Enter must not submit or advance.
-    const result = await price.evaluate((element) => {
+    // keydown of the committing Enter. The value must be committed once.
+    //
+    // What this cannot assert: that the committing Enter submits nothing and moves
+    // no focus. A script-dispatched Enter does neither in Chromium, Firefox or
+    // WebKit (a real keypress does), so those assertions pass with the guard's
+    // just-ended handling disabled. They are a manual check instead:
+    // `_plans/evidence/pattern-input/IME-MANUAL.md`.
+    const committed = await price.evaluate((element) => {
       element.value = "";
       element.dispatchEvent(
         new CompositionEvent("compositionstart", { bubbles: true }),
@@ -80,43 +86,20 @@ for (const url of examples) {
       element.dispatchEvent(
         new CompositionEvent("compositionend", { data: "12.5", bubbles: true }),
       );
-
-      let submitted = false;
-      const form = element.closest("form");
-      form?.addEventListener("submit", (event) => {
-        submitted = true;
-        event.preventDefault();
-      });
-      const focusLeft = { value: false };
-      element.addEventListener("focusout", () => {
-        focusLeft.value = true;
-      });
-
       const enter = new KeyboardEvent("keydown", {
         key: "Enter",
         bubbles: true,
         cancelable: true,
       });
       element.dispatchEvent(enter);
-      return {
-        prevented: enter.defaultPrevented,
-        submitted,
-        focusLeft: focusLeft.value,
-        stillFocused: document.activeElement === element,
-      };
+      return element.value;
     });
 
     await expect(price).toHaveValue("12.5");
-    // The committing Enter belongs to the IME: it must not submit the form and
-    // must not move focus (no "advance" to the next field).
-    expect(result.submitted, "the committing Enter did not submit").toBe(false);
-    expect(result.focusLeft, "the committing Enter did not move focus").toBe(
-      false,
-    );
-    expect(result.stillFocused, "the field keeps focus").toBe(true);
+    expect(committed, "the composition is committed once").toBe("12.5");
     test.info().annotations.push({
       type: "PI-IME-3",
-      description: `${browserName}: prevented=${String(result.prevented)} submitted=${String(result.submitted)}`,
+      description: `${browserName}: committed=${committed}. Submit/advance is a manual check (IME-MANUAL.md): a script-dispatched Enter cannot prove it.`,
     });
   });
 
