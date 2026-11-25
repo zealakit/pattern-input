@@ -5,7 +5,7 @@
   "description": "Private Playwright workspace for real-browser checks of the pattern-input adapters.",
   "type": "module",
   "scripts": {
-    "build:fixtures": "pnpm -w --filter './packages/*' run build && pnpm -w --filter './examples/*' run build",
+    "build:fixtures": "pnpm -w run build && pnpm -w exec pnpm --filter './examples/*' run build",
     "test": "pnpm run build:fixtures && playwright test",
     "install:browsers": "playwright install --with-deps chromium firefox webkit"
   },
