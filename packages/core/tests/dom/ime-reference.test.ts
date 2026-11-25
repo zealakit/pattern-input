@@ -101,6 +101,39 @@ test("[PI-IME-2] a composing keydown never runs a field command", () => {
   }
 });
 
+test("[PI-IME-3] the key that follows compositionend runs no command", async () => {
+  const element = input();
+  const controller = createNumberController({ step: 1 });
+  const detach = attachInput(element, controller);
+
+  try {
+    element.focus();
+    element.dispatchEvent(compositionEvent("compositionstart", ""));
+    element.value = "12";
+    element.dispatchEvent(compositionEvent("compositionupdate", "12"));
+    element.dispatchEvent(compositionEvent("compositionend", "12"));
+
+    // Safari sends the committing key after compositionend, in the same task and
+    // with `isComposing` false.
+    const committing = keydown(element, "ArrowUp");
+    assert.equal(
+      committing.defaultPrevented,
+      false,
+      "that key belongs to the IME",
+    );
+    assert.equal(element.value, "12", "so the field did not step");
+
+    // Positive control: one task later the same key is an ordinary command.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const next = keydown(element, "ArrowUp");
+    assert.equal(next.defaultPrevented, true);
+    assert.equal(element.value, "13");
+  } finally {
+    detach();
+    element.remove();
+  }
+});
+
 test("[PI-IME-4] Android Gboard composition text is accepted and unidentified keys do nothing", () => {
   const element = input();
   const controller = createNumberController({ maximumFractionDigits: 2 });

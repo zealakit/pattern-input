@@ -57,21 +57,27 @@ for (const url of examples) {
 for (const url of examples) {
   test(`[PI-IME-3] Safari ordering: compositionend before the committing Enter (${url})`, async ({
     page,
-    browserName,
   }) => {
     await page.goto(url);
     const price = page.getByTestId("price");
     await price.click();
 
     // Synthetic on every browser: Safari fires compositionend first, then the
-    // keydown of the committing Enter. The value must be committed once.
-    //
-    // What this cannot assert: that the committing Enter submits nothing and moves
-    // no focus. A script-dispatched Enter does neither in Chromium, Firefox or
-    // WebKit (a real keypress does), so those assertions pass with the guard's
-    // just-ended handling disabled. They are a manual check instead:
-    // `_plans/evidence/pattern-input/IME-MANUAL.md`.
-    const committed = await price.evaluate((element) => {
+    // committing key in the same task, with `isComposing` false. That key belongs
+    // to the IME, so it must run no field command. ArrowUp stands in for it
+    // because its effect (a step) is observable; a script-dispatched Enter has no
+    // default action, so submission stays a manual check
+    // (`_plans/evidence/pattern-input/IME-MANUAL.md`).
+    const result = await price.evaluate(async (element: HTMLInputElement) => {
+      const arrowUp = () => {
+        const event = new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          bubbles: true,
+          cancelable: true,
+        });
+        element.dispatchEvent(event);
+        return event.defaultPrevented;
+      };
       element.value = "";
       element.dispatchEvent(
         new CompositionEvent("compositionstart", { bubbles: true }),
@@ -86,21 +92,28 @@ for (const url of examples) {
       element.dispatchEvent(
         new CompositionEvent("compositionend", { data: "12.5", bubbles: true }),
       );
-      const enter = new KeyboardEvent("keydown", {
-        key: "Enter",
-        bubbles: true,
-        cancelable: true,
-      });
-      element.dispatchEvent(enter);
-      return element.value;
+      const before = element.value;
+      const committingRan = arrowUp();
+      const afterCommitting = element.value;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const nextRan = arrowUp();
+      return {
+        before,
+        committingRan,
+        afterCommitting,
+        nextRan,
+        afterNext: element.value,
+      };
     });
 
-    await expect(price).toHaveValue("12.5");
-    expect(committed, "the composition is committed once").toBe("12.5");
-    test.info().annotations.push({
-      type: "PI-IME-3",
-      description: `${browserName}: committed=${committed}. Submit/advance is a manual check (IME-MANUAL.md): a script-dispatched Enter cannot prove it.`,
-    });
+    expect(result.committingRan, "the committing key ran no command").toBe(
+      false,
+    );
+    expect(result.afterCommitting).toBe(result.before);
+    expect(result.nextRan, "one task later the key is a command again").toBe(
+      true,
+    );
+    expect(result.afterNext).not.toBe(result.before);
   });
 
   test(`[PI-IME-7] macOS Telex marked text stays unformatted until compositionend (${url})`, async ({
