@@ -1,16 +1,16 @@
 {
-  "note": "NQ11 hydration rows per adapter. The SSR-import row is covered by hydration.test.ts; hydrate-with-zero-warnings rows are todo.",
+  "note": "NQ11 hydration rows. 'covered' = a test file exists at packages/<adapter>/tests/step-1b-hydration.test.ts; 'todo' names the plan that will add it. Svelte is covered by the SSR-import test only (its package ships raw .svelte files).",
   "rows": [
     {
       "adapter": "react",
       "behaviour": "Server render react markup, then hydrate: zero warnings and identical ids/aria",
-      "status": "todo",
+      "status": "covered",
       "owner": "02"
     },
     {
       "adapter": "vue",
       "behaviour": "Server render vue markup, then hydrate: zero warnings and identical ids/aria",
-      "status": "todo",
+      "status": "covered",
       "owner": "02"
     },
     {
