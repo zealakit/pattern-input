@@ -28,6 +28,7 @@ const PUBLIC_SUBPATHS = new Set([
   `${ENGINE}/pointer`,
   `${ENGINE}/keyboard`,
   `${ENGINE}/position`,
+  `${ENGINE}/presence`,
   `${ENGINE}/package.json`,
 ]);
 
