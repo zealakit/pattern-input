@@ -32,9 +32,13 @@ Cài một adapter cho framework của bạn. Ứng dụng đã có framework ru
 
 ```bash
 npm i @zealakit/pattern-input-vanilla
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-react
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-vue
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-svelte
+npm i @zealakit/ui-engine   # peer
 
 # or yarn, pnpm, ...
 ```

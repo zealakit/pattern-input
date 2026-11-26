@@ -13,6 +13,7 @@ Attach number, masked, and one-time-code behavior to host-owned inputs in Vanill
 
 ```bash
 npm i @zealakit/pattern-input-vanilla
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

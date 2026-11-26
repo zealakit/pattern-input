@@ -13,6 +13,7 @@ Factory, action và component cho field number, masked và one-time-code trong S
 
 ```bash
 npm i @zealakit/pattern-input-svelte
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

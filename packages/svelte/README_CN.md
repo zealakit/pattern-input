@@ -13,6 +13,7 @@ Svelte 5 的 number、masked 与一次性验证码工厂、action 与组件。
 
 ```bash
 npm i @zealakit/pattern-input-svelte
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

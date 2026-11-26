@@ -13,6 +13,7 @@ Vue 3.5+ 的 number、masked 与一次性验证码组合式函数与渲染函数
 
 ```bash
 npm i @zealakit/pattern-input-vue
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

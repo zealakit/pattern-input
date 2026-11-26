@@ -13,6 +13,7 @@ Hook và component mỏng cho field number, masked và one-time-code trong React
 
 ```bash
 npm i @zealakit/pattern-input-react
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

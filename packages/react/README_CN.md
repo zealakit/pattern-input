@@ -13,6 +13,7 @@ React 18 与 19 的 number、masked 与一次性验证码 hook 与轻量组件�
 
 ```bash
 npm i @zealakit/pattern-input-react
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

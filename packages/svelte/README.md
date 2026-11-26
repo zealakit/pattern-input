@@ -13,6 +13,7 @@ Factories, actions, and components for number, masked, and one-time-code fields 
 
 ```bash
 npm i @zealakit/pattern-input-svelte
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

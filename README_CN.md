@@ -32,9 +32,13 @@ Pattern Input 负责格式化、光标与选区、键盘导航、剪贴板粘贴
 
 ```bash
 npm i @zealakit/pattern-input-vanilla
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-react
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-vue
+npm i @zealakit/ui-engine   # peer
 npm i @zealakit/pattern-input-svelte
+npm i @zealakit/ui-engine   # peer
 
 # or yarn, pnpm, ...
 ```

@@ -13,6 +13,7 @@ Hooks and thin components for number, masked, and one-time-code fields in React 
 
 ```bash
 npm i @zealakit/pattern-input-react
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

@@ -13,6 +13,7 @@ Gắn hành vi number, masked và one-time-code vào input do bạn sở hữu v
 
 ```bash
 npm i @zealakit/pattern-input-vanilla
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

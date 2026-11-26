@@ -13,6 +13,7 @@ Composable và component render-function cho field number, masked và one-time-c
 
 ```bash
 npm i @zealakit/pattern-input-vue
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

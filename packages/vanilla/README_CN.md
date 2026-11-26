@@ -13,6 +13,7 @@
 
 ```bash
 npm i @zealakit/pattern-input-vanilla
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API

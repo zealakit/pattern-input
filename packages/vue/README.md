@@ -13,6 +13,7 @@ Composables and render-function components for number, masked, and one-time-code
 
 ```bash
 npm i @zealakit/pattern-input-vue
+npm i @zealakit/ui-engine   # peer
 ```
 
 ## API
