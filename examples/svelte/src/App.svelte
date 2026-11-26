@@ -31,6 +31,13 @@ $effect.pre(() => {
   controlledField.sync();
   invalidField.sync();
 });
+
+// The props must follow the controller state (aria-invalid changes on blur), so
+// derive them from the field store instead of spreading a one-time snapshot.
+let invalidProps = $derived.by(() => {
+  void $invalidField;
+  return invalidField.getInputProps({ id: "invalid", "data-testid": "invalid" });
+});
 </script>
 
 <main>
@@ -88,12 +95,7 @@ $effect.pre(() => {
   />
 
   <label for="invalid">Invalid field</label>
-  <input
-    id="invalid"
-    data-testid="invalid"
-    {...invalidField.getInputProps()}
-    use:fieldAction={invalidField}
-  />
+  <input {...invalidProps} use:fieldAction={invalidField} />
   <small id="invalid-error" class="error" data-testid="invalid-error">
     {$invalidField.status === "invalid" ? "This value is invalid" : ""}
   </small>
