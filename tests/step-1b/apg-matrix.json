@@ -1,5 +1,5 @@
 {
-  "note": "APG rows (00-foundation-3 §4). status: covered | todo; owner is the plan that fills a todo row.",
+  "note": "APG rows (00-foundation-3 \u00a74). status: covered | todo; owner is the plan that fills a todo row. The phone-input paste row was dropped in Q2: pattern-input has no phone component (MaskedInput covers the phone mask).",
   "rows": [
     {
       "component": "number-input",
@@ -11,10 +11,11 @@
     },
     {
       "component": "number-input",
-      "behaviour": "Home/End go to the minimum and maximum",
+      "behaviour": "Home/End move the caret to the start/end of the number text",
       "keys": "Home",
-      "status": "todo",
-      "owner": "02"
+      "status": "covered",
+      "owner": "02",
+      "test": "e2e/specs/fields.spec.ts :: APG number field: Home/End move the caret to the start/end"
     },
     {
       "component": "masked-input",
@@ -38,13 +39,6 @@
       "status": "covered",
       "owner": "02",
       "test": "packages/core/tests/apg-keys.test.ts :: [APG-otp-1] ArrowLeft/ArrowRight move between slots and Backspace steps back"
-    },
-    {
-      "component": "phone-input",
-      "behaviour": "Paste fills every slot at once",
-      "keys": "paste",
-      "status": "todo",
-      "owner": "02"
     }
   ]
 }

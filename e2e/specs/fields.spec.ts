@@ -41,6 +41,28 @@ for (const example of examples) {
       expect(caret).toBe(8);
     });
 
+    test("APG number field: Home/End move the caret to the start/end", async ({
+      page,
+    }) => {
+      // Q2: the number field keeps APG semantics as caret movement (not min/max).
+      const price = page.getByTestId("price");
+      await price.click();
+      await price.pressSequentially("1234.56");
+      await price.press("Home");
+      expect(
+        await price.evaluate(
+          (element) => (element as HTMLInputElement).selectionStart,
+        ),
+      ).toBe(0);
+      await price.press("End");
+      const value = await price.inputValue();
+      expect(
+        await price.evaluate(
+          (element) => (element as HTMLInputElement).selectionStart,
+        ),
+      ).toBe(value.length);
+    });
+
     test("AC-4 e2e: masked paste keeps literals and incomplete is not invalid", async ({
       page,
     }) => {
