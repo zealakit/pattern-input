@@ -3,7 +3,7 @@
  * Size baseline and regression check (00-foundation-3 §5, X31, P6).
  *
  * Records the gzip size of every published package's built output in
- * `size-baseline.json`, and fails when an entry grows past **1 KB or 10 %** of
+ * `size-baseline.json`, and fails when an entry grows past **1 KB OR 10 %** of
  * its baseline, whichever is larger. Growth is reported, never blocked, at
  * publish time: `pnpm check` is where it fails, so a regression cannot land.
  *
@@ -13,6 +13,7 @@
  *   node scripts/check-size-regression.mjs          # check against the baseline
  *   node scripts/check-size-regression.mjs --write  # rewrite the baseline
  */
+import { sizeBudget } from "./lib/size-budget.mjs";
 import {
   existsSync,
   readFileSync,
@@ -27,9 +28,6 @@ import { gzipSync } from "node:zlib";
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baselinePath = path.join(rootDir, "size-baseline.json");
 const WRITE = process.argv.includes("--write");
-/** X31: a regression is growth past 1 KB or 10 %, whichever is larger. */
-const ABSOLUTE_TOLERANCE = 1024;
-const RELATIVE_TOLERANCE = 0.1;
 
 /** Gzip of the whole built entry graph: every `.js` file under `dist`. */
 function gzipSize(dir) {
@@ -105,7 +103,7 @@ for (const [name, { gzip }] of Object.entries(measured)) {
   }
   const budget =
     reference +
-    Math.max(ABSOLUTE_TOLERANCE, Math.round(reference * RELATIVE_TOLERANCE));
+    sizeBudget(reference);
   if (gzip > budget) {
     failures.push(
       `${name}: ${gzip} B gzip, baseline ${reference} B, budget ${budget} B (${(((gzip - reference) / reference) * 100).toFixed(1)} % growth)`,
