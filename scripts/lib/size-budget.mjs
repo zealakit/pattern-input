@@ -7,4 +7,5 @@ export const RELATIVE_TOLERANCE = 0.1;
  * the two, not the larger.
  */
 export const sizeBudget = (reference) =>
-  reference + Math.min(ABSOLUTE_TOLERANCE, Math.round(reference * RELATIVE_TOLERANCE));
+  reference +
+  Math.min(ABSOLUTE_TOLERANCE, Math.round(reference * RELATIVE_TOLERANCE));

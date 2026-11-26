@@ -4,7 +4,7 @@
  *
  * Records the gzip size of every published package's built output in
  * `size-baseline.json`, and fails when an entry grows past **1 KB OR 10 %** of
- * its baseline, whichever is larger. Growth is reported, never blocked, at
+ * its baseline, whichever is smaller. Growth is reported, never blocked, at
  * publish time: `pnpm check` is where it fails, so a regression cannot land.
  *
  * Dependency-free on purpose (node:zlib) so the same file runs in every repo.
@@ -59,7 +59,9 @@ for (const name of readdirSync(packagesDir)) {
     continue;
   }
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  if (manifest.private === true) {
+  // Core is private but bundled into every adapter tarball at pack time; its
+  // bytes ship, so they must be watched too (X31). Other private packages stay out.
+  if (manifest.private === true && !manifest.name.endsWith("-core")) {
     continue;
   }
   const entry = path.join(packageDir, "dist", "index.js");
@@ -101,9 +103,7 @@ for (const [name, { gzip }] of Object.entries(measured)) {
   if (typeof reference !== "number") {
     continue;
   }
-  const budget =
-    reference +
-    sizeBudget(reference);
+  const budget = reference + sizeBudget(reference);
   if (gzip > budget) {
     failures.push(
       `${name}: ${gzip} B gzip, baseline ${reference} B, budget ${budget} B (${(((gzip - reference) / reference) * 100).toFixed(1)} % growth)`,

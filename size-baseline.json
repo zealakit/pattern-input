@@ -12,6 +12,9 @@
     },
     "@zealakit/pattern-input-vue": {
       "gzip": 2857
+    },
+    "@zealakit/pattern-input-core": {
+      "gzip": 25632
     }
   }
 }
