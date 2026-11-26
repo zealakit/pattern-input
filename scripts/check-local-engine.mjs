@@ -7,7 +7,7 @@
  * The engine stays unpublished (D23), so every package repo is developed against
  * `link:../../../ui-engine`. A release must switch those to the published range
  * first; this guard makes publishing from the development state impossible. It
- * also covers `@zealakit/overlay-*`, which a repo may link while the overlay
+ * also covers `another component package-*`, which a repo may link while the overlay
  * pilot is the release candidate.
  *
  * It is deliberately **not** part of `pnpm check` (the branch is linked on
