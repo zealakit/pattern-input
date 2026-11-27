@@ -17,6 +17,7 @@ test("vue entry imports under happy-dom and exports nothing", async () => {
     "InputOTPGroup",
     "InputOTPSeparator",
     "InputOTPSlot",
+    "MaskPatternError",
     "MaskedInput",
     "NumberInput",
     "PatternInputError",

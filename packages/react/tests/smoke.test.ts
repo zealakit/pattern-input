@@ -14,6 +14,7 @@ test("react entry imports under happy-dom and exports the documented surface", a
     "InputOTPGroup",
     "InputOTPSeparator",
     "InputOTPSlot",
+    "MaskPatternError",
     "MaskedInput",
     "NumberInput",
     "PatternInputError",

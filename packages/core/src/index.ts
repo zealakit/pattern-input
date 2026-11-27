@@ -18,6 +18,7 @@ export type {
   NumberEvent,
   NumberInputProps,
   NumberOptions,
+  NumberRounding,
   NumberState,
   ResolvedNumberOptions,
 } from "./number/index.js";
@@ -26,6 +27,7 @@ export type {
   OtpGroupProps,
   OtpHiddenInputProps,
   OtpOptions,
+  OtpSlotLabel,
   OtpSlotProps,
   OtpState,
   ResolvedOtpOptions,
