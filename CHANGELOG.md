@@ -18,9 +18,6 @@ No version is set and nothing here is published (D23).
 
 - The Svelte invalid-field example updates `aria-invalid` after blur (it used to spread a one-time
   props snapshot).
-
-### Known issue
-
-- Firefox delivers a full OTP code inserted with `insertText` as `beforeinput` with
-  `inputType: "insertCompositionText"`; the controller's IME gate skips it and the last cell is
-  filled from the wrong character. Repro: `_plans-2/evidence/03-examples/REPORT-2.md`.
+- Firefox's `insertText` (`beforeinput` with `inputType: "insertCompositionText"`, followed by a
+  non-composing `input` event) no longer inserts the code twice: the IME gate ignores the trailing
+  input after a composition ends, so all OTP cells keep the typed digits.
