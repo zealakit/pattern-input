@@ -84,7 +84,8 @@ string.
   editable map (FR-14).
 - After every handled event the binding repaints `el.value` and the selection under an `applying`
   guard, so its own synthetic events are ignored. Controlled mode always paints the approved
-  state, so a rejected proposal is never shown (AC-7).
+  state, so a rejected proposal is never shown (AC-7). Detaching (`attachInput` cleanup) calls
+  `composition.destroy()` as well as removing all listeners.
 - `attachOtpGroup(group, controller, source, { hiddenInput? })` wires per-slot
   beforeinput/input/composition/paste/key/focus, keeps roving `tabindex`, moves focus to
   `activeIndex`, and keeps the hidden input in sync. `source` is an `OtpSlotRegistry` (preferred:
@@ -164,7 +165,9 @@ components, built with `svelte-package`.
   React 18 StrictMode (it re-runs effects but not refs).
 - OTP: `getGroupProps()` (includes the group ref), `getSlotProps(index)` (stable
   `registry.refFor(index)` ref and an initial `defaultValue` for SSR), `getHiddenInputProps()`.
-- `NumberInput`, `MaskedInput` render only the field's own element. `InputOTP` is a compound
+- `NumberInput`, `MaskedInput` render only the field's own element and accept standard `<input>` HTML
+  passthrough attributes (`id`, `className`, `placeholder`, `data-*`, `aria-*`, etc.) directly
+  alongside legacy `inputProps`. `InputOTP` is a compound
   component: `<InputOTP maxLength>` with `InputOTP.Group`, `.Slot index`, `.Separator` (also
   exported by name for Server Component boundaries). The root renders `role="group"` plus the
   hidden input and forwards its ref; the field owns slot behavior attributes and lets the rest
@@ -201,7 +204,9 @@ the DOM binding, with no element creation.
 - Controlled edits reduce to a proposal; `getState()` keeps the approved state until `setOptions`
   supplies the matching value, which adopts the proposal **including its caret**. Re-supplying
   the approved value drops the proposal, so a rejected paste is never shown (AC-7). A transformed
-  value creates fresh state with the caret at the end.
+  value creates fresh state with the caret at the end. When `setOptions` changes formatting options
+  (`mask`, `locale`, `showLiterals`, etc.) without changing value, the controller rebuilds and
+  notifies subscribers so the DOM repaints immediately.
 - Focus, caret and selection changes are local UI state in both modes: adopted immediately,
   never emitted as value changes (FR-8).
 - Uncontrolled changes emit `onValueChange` once per value/status change, deduped by value.
@@ -251,9 +256,10 @@ the DOM binding, with no element creation.
 - Status: `""` → empty, any required slot unfilled → incomplete (never invalid), all required
   filled → complete; `invalid` comes only from the consumer `validate` on commit.
 - Insert: typing the next literal is a no-op advance, a mismatching character rejects the whole
-  insert, and at capacity a longer alternative may take the character (first match wins, so the
-  field switches patterns as the raw value grows). Paste extracts editable characters, truncates
-  at capacity, and rejects only when nothing was accepted.
+  insert, and a longer alternative (including mid-string inserts or `selectMask` overrides) may
+  take the character. Paste and `setValue` extract editable characters and select the matching
+  alternative via `pickAlternative` (custom `selectMask` when valid, else `selectAlternative`),
+  rejecting paste only when nothing was accepted.
 - `inputMode` defaults to `numeric` for all-digit masks (the documented reading of FR-18) and
   `text` otherwise; the getter also emits `autocapitalize` for upper-only letter masks and
   `maxlength` from the longest alternative. No `role`, no `placeholder`.

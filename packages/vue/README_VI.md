@@ -4,10 +4,10 @@
 
 ![Zealakit Pattern Input cover](https://github.com/zealakit/pattern-input/blob/main/assets/images/pattern-input-cover.jpg?raw=true)
 
-Composable và component render-function cho field number, masked và one-time-code trong Vue 3.5+.
+Composables và component cho trường nhập số, mask và OTP trong Vue 3.5+.
 
 > **Note**
-> Package không ship CSS, class hay validation engine. Nó gắn hành vi vào element của bạn; bạn giữ toàn quyền về style và luật.
+> Package này không ship CSS, không class và không có validation engine. Nó gắn hành vi vào các element do bạn sở hữu; bạn giữ toàn quyền kiểm soát style và luật kiểm tra.
 
 ## Install
 
@@ -16,29 +16,146 @@ npm i @zealakit/pattern-input-vue
 npm i @zealakit/ui-engine   # peer
 ```
 
-## API
+`@zealakit/ui-engine` (`^1.0.0-beta.1`) là peer dependency bắt buộc.
 
-Ba field dùng chung một contract. Đổi `createNumberInput` thành `createMaskedInput` hoặc `createOtpInput` (tương tự với hook/composable).
+## Number input
 
-```ts
-import { useNumberInput } from "@zealakit/pattern-input-vue";
-
-const field = useNumberInput(() => ({ maximumFractionDigits: 2 }));
-
-<input v-bind="field.getInputProps()" :ref="field.inputRef" />;
-
-field.value(); field.formattedValue(); field.status();
-field.setValue(99); field.clear(); field.undo(); field.redo();
-```
-
-## OTP layout
-
-Bố cục do bạn quyết định. `InputOTP.Group` và `InputOTP.Separator` chỉ là element thường, nên bạn có thể gom slot, thêm dấu phân cách hoặc bọc bất cứ thứ gì. Mỗi `InputOTP.Slot` nhận một `index` rõ ràng từ `0` đến `maxLength - 1`.
+### Quick start
 
 ```vue
 <script setup lang="ts">
-import { InputOTP } from "@zealakit/pattern-input-vue";
 import { ref } from "vue";
+import { NumberInput, useNumberInput } from "@zealakit/pattern-input-vue";
+
+const amount = ref<number | null>(null);
+const field = useNumberInput(() => ({ maximumFractionDigits: 2 }));
+</script>
+
+<template>
+  <NumberInput v-model="amount" id="price" placeholder="1,234.56" :options="{ min: 0 }" />
+  <input v-bind="field.getInputProps({ id: 'price-hook' })" :ref="field.inputRef" />
+</template>
+```
+
+### NumberOptions
+
+| Tùy chọn | Kiểu | Mặc định | Mô tả |
+| --- | --- | --- | --- |
+| `locale` | `string` | `"en-US"` (`.`, `,`) | Locale dùng một lần để lấy dấu thập phân và phân cách hàng nghìn qua `Intl.NumberFormat`. |
+| `decimalSeparator` | `string` | Theo `locale` | Ký tự dấu thập phân tường minh (ghi đè `locale`). |
+| `groupSeparator` | `string` | Theo `locale` | Ký tự phân cách nhóm số. Truyền `""` để tắt phân cách. |
+| `minimumFractionDigits` | `number` | `0` | Số chữ số thập phân tối thiểu được đệm thêm khi commit. |
+| `maximumFractionDigits` | `number` | `20` | Số chữ số thập phân tối đa khi nhập hoặc làm tròn khi commit. |
+| `rounding` | `"truncate" \| "round-half-up" \| "round-half-even"` | `"round-half-up"` | Chế độ làm tròn khi commit nếu `value` vượt quá `maximumFractionDigits`. |
+| `min` | `number` | `—` | Giá trị số nhỏ nhất hợp lệ. |
+| `max` | `number` | `—` | Giá trị số lớn nhất hợp lệ. |
+| `step` | `number` | `1` | Bước tăng/giảm cho phím `ArrowUp` / `ArrowDown`. |
+| `largeStep` | `number` | `step * 10` | Bước lớn cho phím `PageUp` / `PageDown`. |
+| `allowNegative` | `boolean` | `min === undefined \| min < 0` | Cho phép nhập số âm và phím `-`. |
+| `clampBehavior` | `"blur" \| "none"` | `"blur"` | `"blur"` kẹp giá trị vào `[min, max]` khi commit; `"none"` giữ nguyên và đánh dấu `invalid`. |
+| `validate` | `(value, ctx) => boolean \| string \| undefined` | `—` | Hàm kiểm tra của bạn chạy khi commit (`false` hoặc chuỗi sẽ đánh dấu `invalid`). |
+| `invalid` | `boolean` | `false` | Ép `aria-invalid="true"` từ bên ngoài. |
+| `describedBy` | `string` | `—` | Truyền sang `aria-describedby`. |
+| `required` | `boolean` | `false` | Truyền sang `aria-required` / `required`. |
+| `disabled` | `boolean` | `false` | Vô hiệu hóa tương tác trên input. |
+| `readOnly` | `boolean` | `false` | Chặn chỉnh sửa nhưng vẫn cho focus và bôi đen. |
+| `value` | `number \| null` | `—` | Giá trị ở chế độ controlled (kể cả `null` cũng bật controlled). |
+| `defaultValue` | `number \| null` | `null` | Giá trị ban đầu ở chế độ uncontrolled. |
+| `onValueChange` | `(change: ValueChange<number \| null>) => void` | `—` | Nhận `{ value, formattedValue, status, reason }`. |
+| `onStatusChange` | `(status: FieldStatus) => void` | `—` | Gọi khi `status` thay đổi. |
+
+## Masked input
+
+### Quick start
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import { MaskedInput, useMaskedInput } from "@zealakit/pattern-input-vue";
+
+const tax = ref("");
+const card = useMaskedInput(() => ({
+  mask: ["9999 9999 9999 9999", "9999 999999 99999"],
+  selectMask: (raw) => (/^3[47]/.test(raw) ? 1 : 0),
+}));
+</script>
+
+<template>
+  <MaskedInput v-model="tax" id="tax" :options="{ mask: '999.999.999-99' }" />
+  <input v-bind="card.getInputProps({ id: 'card' })" :ref="card.inputRef" />
+</template>
+```
+
+### Mask pattern syntax
+
+| Ký hiệu | Khớp với | Ví dụ |
+| --- | --- | --- |
+| `9` | Một chữ số ASCII `[0-9]` | `"999-999"` |
+| `a` | Một chữ cái ASCII `[A-Za-z]` | `"aaa-999"` |
+| `*` | Một ký tự chữ hoặc số `[A-Za-z0-9]` | `"****"` |
+| `\x` | Ký tự literal được escape (`\9`, `\a`, `\*`, `\[`, `\{`, `\\`) | `"\9-999"` |
+| `[...]` | Đoạn tùy chọn; bỏ trống vẫn đạt `status === "complete"` | `"(999) 999-9999[ x999]"` |
+| `{n}`, `{n,m}`, `{n,}` | Lặp token đứng trước (`{n,}` tối đa 64 slot) | `"9{4}-9{2,4}"` |
+| Key tùy chỉnh | Một ký tự khai báo trong `tokens` với `{ test, transform? }` | `"AA-9999-HH"` |
+
+### MaskedOptions
+
+| Tùy chọn | Kiểu | Mặc định | Mô tả |
+| --- | --- | --- | --- |
+| `mask` | `string \| readonly string[]` | **required** | Chuỗi pattern hoặc mảng các pattern thay thế theo thứ tự. |
+| `tokens` | `Record<string, MaskTokenDefinition>` | `{}` | Định nghĩa token tùy chỉnh một ký tự (`{ test: RegExp, transform?: "upper" \| "lower" }`). |
+| `selectMask` | `(raw: string, alternatives: readonly string[]) => number` | `—` | Hàm chọn index bắt đầu từ 0 cho mảng `mask`. Giá trị ngoài phạm vi tự fallback. |
+| `showLiterals` | `"filled" \| "always"` | `"filled"` | `"always"` hiển thị sẵn toàn bộ khung mask cùng `placeholderChar`. |
+| `placeholderChar` | `string` | `"_"` | Một ký tự giữ chỗ cho slot trống khi bật `showLiterals: "always"`. |
+| `inputMode` | `"text" \| "numeric"` | Tự động | Mặc định `"numeric"` khi mọi slot chỉ nhận chữ số. |
+| `validate` | `(raw, ctx) => boolean \| string \| undefined` | `—` | Hàm kiểm tra chạy khi commit (`ctx` gồm `status` và `formattedValue`). |
+| `invalid` | `boolean` | `false` | Ép `aria-invalid="true"` từ bên ngoài. |
+| `describedBy` | `string` | `—` | Truyền sang `aria-describedby`. |
+| `required` | `boolean` | `false` | Truyền sang `aria-required` / `required`. |
+| `disabled` | `boolean` | `false` | Vô hiệu hóa tương tác trên input. |
+| `readOnly` | `boolean` | `false` | Chặn chỉnh sửa nhưng vẫn cho focus và bôi đen. |
+| `value` | `string` | `—` | Giá trị raw ở chế độ controlled (không gồm ký tự literal). |
+| `defaultValue` | `string` | `""` | Giá trị raw ban đầu ở chế độ uncontrolled. |
+| `onValueChange` | `(change: ValueChange<string>) => void` | `—` | Nhận `{ value, formattedValue, status, reason }`. |
+| `onStatusChange` | `(status: FieldStatus) => void` | `—` | Gọi khi `status` thay đổi. |
+
+### Phone, multi-mask, and custom token recipes
+
+Chọn đúng chiến lược mask cho từng định dạng thực tế. Tránh gộp hai mẫu số điện thoại dễ nhập nhằng như `["(999) 999-9999", "+9 (999) 999-9999"]` trên cùng một input: khi gõ chữ số thứ 11, mã vùng sẽ bị đẩy thành mã quốc gia. Thay vào đó hãy đổi một `mask` chính xác theo quốc gia đang chọn.
+
+```ts
+// 1. Phone (single mask per selected country — never stack ambiguous lengths)
+const PHONE_MASKS = { US: "(999) 999-9999", VN: "9999 999 999" };
+
+// 2. Multi-mask by length (CPF 11 digits / CNPJ 14 digits)
+const taxMask = ["999.999.999-99", "99.999.999/9999-99"];
+
+// 3. Prefix-driven selectMask (Amex 4-6-5 vs Standard 4-4-4-4)
+const cardOptions = {
+  mask: ["9999 9999 9999 9999", "9999 999999 99999"],
+  selectMask: (raw: string) => (/^3[47]/.test(raw) ? 1 : 0),
+};
+
+// 4. Always-visible template + custom uppercase tokens
+const licenseOptions = {
+  mask: "AA-9999-HH",
+  tokens: {
+    A: { test: /[A-Za-z]/, transform: "upper" as const },
+    H: { test: /[0-9A-Fa-f]/, transform: "upper" as const },
+  },
+  showLiterals: "always" as const,
+  placeholderChar: "_",
+};
+```
+
+## One-time code (OTP)
+
+### Quick start
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import { InputOTP } from "@zealakit/pattern-input-vue";
 
 const code = ref("");
 </script>
@@ -60,29 +177,90 @@ const code = ref("");
 </template>
 ```
 
-Root render một `role="group"` (đặt tên bằng `label` hoặc `labelledBy`) và một hidden input chứa toàn bộ mã theo `name`. Group không thêm ngữ nghĩa accessibility nào và separator bị ẩn khỏi công nghệ hỗ trợ. Các thuộc tính quyết định hành vi của slot (`type`, `inputmode`, `maxlength`, `tabindex`, `autocomplete`, `aria-label`) do field quản lý; mọi thứ còn lại, gồm `class` và `id`, được chuyển tiếp. `v-model` dùng được trên root.
+### OtpOptions
 
-Dot notation (`<InputOTP.Group>`) cần `<script setup>`; các phần cũng được export theo tên (`InputOTPGroup`, `InputOTPSlot`, `InputOTPSeparator`).
+| Tùy chọn | Kiểu | Mặc định | Mô tả |
+| --- | --- | --- | --- |
+| `length` / `maxLength` | `number` | **required** | Số lượng ô OTP (`1..32`). Component dùng `maxLength`; factory dùng `length`. |
+| `type` | `"numeric" \| "alphanumeric"` | `"numeric"` | Loại ký tự hợp lệ cho mỗi ô. |
+| `transform` | `"upper" \| "lower"` | `—` | Đổi kiểu chữ khi `type: "alphanumeric"`. |
+| `autocomplete` | `"one-time-code" \| "off"` | `"one-time-code"` | Gắn lên ô đầu tiên để hỗ trợ tự điền SMS/OS. |
+| `name` | `string` | `—` | Tên trường form cho thẻ `<input>` ẩn tổng hợp mã. |
+| `label` | `string` | `—` | `aria-label` cho nhóm OTP. |
+| `labelledBy` | `string` | `—` | `aria-labelledby` cho nhóm OTP. |
+| `describedBy` | `string` | `—` | Truyền sang `aria-describedby` của nhóm. |
+| `slotLabel` | `(index: number, length: number) => string` | `Character i of n` | Hàm tạo nhãn accessibility cho từng ô. |
+| `validate` | `(raw, ctx) => boolean \| string \| undefined` | `—` | Hàm kiểm tra chạy khi commit. |
+| `invalid` | `boolean` | `false` | Đánh dấu `aria-invalid="true"` trên nhóm và các ô. |
+| `disabled` | `boolean` | `false` | Vô hiệu hóa tất cả ô nhập. |
+| `required` | `boolean` | `false` | Đánh dấu các ô là bắt buộc. |
+| `value` | `string` | `—` | Chuỗi OTP ở chế độ controlled. |
+| `defaultValue` | `string` | `""` | Chuỗi OTP ban đầu ở chế độ uncontrolled. |
+| `onValueChange` | `(change: ValueChange<string>) => void` | `—` | Nhận `{ value, formattedValue, status, reason }`. |
+| `onStatusChange` | `(status: FieldStatus) => void` | `—` | Gọi khi `status` thay đổi. |
 
-## Contract
+## Controlled mode and validation
 
-Mọi field expose `value`, `formattedValue`, `status`, cùng `setValue`, `clear`, `focus`, `undo`, `redo`. Getter tên `getInputProps` cho number và masked, `getGroupProps` / `getSlotProps` / `getHiddenInputProps` cho OTP. `CONTRACT_VERSION` được export từ package.
+Truyền `value` và `onValueChange` để dùng chế độ controlled. `onValueChange` nhận `{ value, formattedValue, status, reason }`, trong đó `reason` là `"input" | "paste" | "delete" | "step" | "commit" | "reset" | "undo" | "redo" | "programmatic"`. Nếu không cập nhật `value`, thay đổi bị từ chối và giữ nguyên text cùng vị trí con trỏ đã duyệt.
 
-## Behavior
+`status` là `"empty" | "incomplete" | "complete" | "invalid"`. Input nhập dở không bao giờ bị báo invalid; `validate` chỉ chạy khi commit (`Enter` hoặc blur), và trả về `false` hoặc một chuỗi sẽ đặt `status = "invalid"` cùng `aria-invalid="true"`. Kết hợp `describedBy` với id của thẻ báo lỗi.
 
-- Caret và selection được giữ khi format, sửa và paste.
-- Paste được parse bởi field; literal và separator được xử lý.
-- IME commit một lần sau `compositionend`.
-- Hỗ trợ cả controlled và uncontrolled.
-- Undo/redo khôi phục value và caret.
-- ARIA: `aria-invalid` chỉ khi thật sự invalid.
+## Contract and lifecycle
 
-## Non-goals
+Mỗi composable trả về `state` phản ứng, `value()`, `formattedValue()`, `status()`, `inputRef`, `getInputProps(extra?)` (hoặc `getGroupProps()`, `getSlotProps(i)`, `getHiddenInputProps()`), `setValue`, `clear`, `focus`, `undo` và `redo`. `<NumberInput>`, `<MaskedInput>` và `<InputOTP>` hỗ trợ `v-model` và truyền thẳng thuộc tính HTML. Package export đầy đủ `CONTRACT_VERSION`, `GETTER_NAMES`, `INSTANCE_API`, `PatternInputError`, `MaskPatternError` và các type tiện ích.
 
-- Không có style, theme hay class mặc định.
-- Không có schema validation (chỉ callback của consumer).
-- Không bọc hay thay thế input text thường.
-- Không date picker, quy đổi tiền tệ, metadata điện thoại hay gọi mạng.
+## Nuxt
+
+Mọi import đều an toàn với SSR (không chạm biến toàn cục của trình duyệt ở top-level). Dùng `<script setup>` để cú pháp dấu chấm (`InputOTP.Slot`) biên dịch chính xác.
+
+## Styling hooks
+
+| Selector / Thuộc tính | Vị trí | Mục đích |
+| --- | --- | --- |
+| `input[aria-invalid="true"]` | Number, Masked, các ô OTP | Chỉ xuất hiện khi `status === "invalid"` hoặc `invalid: true` (không bao giờ bật khi chỉ mới incomplete). |
+| `input:disabled` | Number, Masked, các ô OTP | Áp dụng khi `disabled: true`. |
+| `input[readonly]` | Number, Masked | Áp dụng khi `readOnly: true`. |
+| `[role="group"]` | Container OTP | Container chuẩn accessibility để xếp các ô OTP theo hàng ngang. |
+| `:focus-visible` | Mọi input | Dùng để vẽ vòng focus đạt chuẩn accessibility. |
+
+```css
+input {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid #94a3b8;
+  border-radius: 8px;
+}
+
+input:focus-visible {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  outline: none;
+}
+
+input[aria-invalid="true"] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+[role="group"] {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+[role="group"] input {
+  width: 2.625rem;
+  height: 3rem;
+  padding: 0;
+  text-align: center;
+  font-weight: 600;
+}
+```
+
+## Agent Skill
+
+Thêm skill tích hợp cho AI agent: [Pattern Input Vue](https://github.com/zealakit/pattern-input/blob/main/skills/pattern-input-vue.md).
 
 ## License
 

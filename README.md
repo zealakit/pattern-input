@@ -15,7 +15,15 @@ Pattern Input handles formatting, caret and selection, keyboard navigation, clip
 > **Note**
 > Pattern Input is a focused, headless set of primitives for number, masked, and one-time-code fields. It ships no CSS and renders no styled markup, so you keep full control of the visuals. Date pickers, currency conversion, phone-number metadata, and a validation engine are not implemented.
 >
-> Pattern Input is not a replacement for a full UI library or design system. Use it when you need accessible input behavior without adopting a large kit, or when your current library's fields are hard to restyle.
+> Pattern Input is not a replacement for a full UI library or design system. Use it when you need accessible input-field behavior without adopting a large kit, or when your current library's fields are hard to restyle.
+
+## Which field to use
+
+| Field | Best for | Output type | Key features |
+| --- | --- | --- | --- |
+| Number | Prices, quantities, decimals, percentages | `number \| null` | Locale separators, step keys, rounding, min/max clamping |
+| Masked | Tax IDs, phone numbers, card numbers, license keys | `string` (raw without literals) | Multi-mask alternatives, `selectMask`, custom tokens, `showLiterals` |
+| OTP | 2FA codes, SMS verification, PINs | `string` (compacted code) | Per-slot focus/roving `tabindex`, paste distribution, hidden form input |
 
 ## Packages
 
@@ -65,14 +73,19 @@ Min+gzip per adapter × field, measured with esbuild (`pnpm size`):
 
 | Adapter | Number | Masked | OTP |
 | --- | --- | --- | --- |
-| vanilla | 8.3 kB | 7.3 kB | 5.2 kB |
-| react | 8.5 kB | 7.5 kB | 5.4 kB |
-| vue | 8.2 kB | 7.2 kB | 5.2 kB |
-| svelte | 8.1 kB | 7.1 kB | 6.7 kB |
+| vanilla | 8.5 kB | 7.6 kB | 5.6 kB |
+| react | 8.7 kB | 7.8 kB | 5.8 kB |
+| vue | 8.4 kB | 7.5 kB | 5.6 kB |
+| svelte | 8.3 kB | 7.4 kB | 6.9 kB |
 
 ## Examples
 
-The [`examples/`](https://github.com/zealakit/pattern-input/tree/main/examples) folder holds runnable integration projects for Vanilla, React, Vue, Svelte, and Next.js. They import the compiled workspace packages, so build first.
+The [`examples/`](https://github.com/zealakit/pattern-input/tree/main/examples) folder holds runnable integration projects for Vanilla, React, Vue, Svelte, and Next.js. They demonstrate:
+
+- Number input with live locale switching (`de-DE` / `en-US` / `vi-VN`)
+- Country-switched phone mask (`US`, `VN`, `UK`) without digit-shifting overflow
+- Multi-mask Tax ID (CPF 11-digit / CNPJ 14-digit) and prefix-driven `selectMask` payment card (Visa/MC vs Amex)
+- Custom tokens with `showLiterals: "always"`, 6-box OTP form submission, controlled rejection, and blur validation
 
 ```bash
 pnpm install

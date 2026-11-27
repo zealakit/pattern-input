@@ -2,22 +2,38 @@
 
 Use this skill when integrating `@zealakit/pattern-input-react` into a React 18 or 19 app.
 
-- Install: `npm i @zealakit/pattern-input-react`
+- Install: `npm i @zealakit/pattern-input-react` and `npm i @zealakit/ui-engine` (`^1.0.0-beta.1` peer)
 - You own the element and the styling; the package ships no CSS, no classes and no validation
-  engine. Spread the prop getters onto your own elements.
+  engine. Spread the prop getters onto your own elements, or use `<NumberInput>` / `<MaskedInput>`
+  with direct `<input>` HTML attributes (`id`, `className`, `placeholder`, `data-*`, `aria-*`) or
+  legacy `inputProps`.
 
 ## Number and masked
 
 ```tsx
+<NumberInput id="price" placeholder="1,234.56" maximumFractionDigits={2} />
+<MaskedInput id="tax" placeholder="123.456.789-00" mask="999.999.999-99" />
+
+// Or use the hooks directly:
 const price = useNumberInput({ maximumFractionDigits: 2 });
 <input {...price.getInputProps({ id: "price" })} />;
-
-const tax = useMaskedInput({ mask: "999.999.999-99" });
-<input {...tax.getInputProps()} />;
 ```
 
 `value`, `formattedValue`, `status` (`empty | incomplete | complete | invalid`), `setValue`,
 `clear`, `focus`, `undo`, `redo`. Never pass `value` to the input: the DOM binding owns it.
+
+## Mask pattern syntax & recipes
+
+- Tokens: `9` (digit `[0-9]`), `a` (letter `[A-Za-z]`), `*` (alphanumeric), `\x` (escaped literal),
+  `[...]` (optional section), `{n}` / `{n,m}` / `{n,}` (repeat, capped at 64 slots), custom keys
+  via `tokens: { H: { test: /[0-9A-Fa-f]/, transform: "upper" } }`.
+- Template & selection: `showLiterals: "always" | "filled"`, `placeholderChar` (default `"_"`),
+  `selectMask: (raw, alternatives) => number` for prefix-driven multi-mask formats (e.g. Amex vs Visa/MC).
+- **Phone anti-pattern:** Never stack ambiguous lengths like `["(999) 999-9999", "+9 (999) 999-9999"]`
+  on one input (an extra digit shifts the area code into the country code). Switch a single exact
+  `mask` per selected country instead.
+- Exported types & errors: `MaskTokenDefinition`, `MaskSelector`, `NumberRounding`, `ChangeReason`,
+  `OtpSlotLabel`, `MaskPatternError`, `PatternInputError`.
 
 ## One-time code
 
@@ -43,6 +59,12 @@ attributes belong to the field; `className`, `id`, `ref` and `data-*` pass throu
 
 Pass `value` and `onValueChange`; update `value` to approve a change. Not updating it rejects the
 change (the field keeps showing the approved value). `value` without `onValueChange` throws.
+
+## Styling starter
+
+Style `[role="group"]` with `display: flex; gap: 0.5rem;` and compact slot boxes
+(`width: 2.625rem; height: 3rem; text-align: center;`), plus `input[aria-invalid="true"]` for
+validation errors (`status === "invalid"`).
 
 ## Rules
 

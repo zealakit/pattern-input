@@ -2,7 +2,7 @@
 
 Use this skill when integrating `@zealakit/pattern-input-vue` into a Vue 3.5+ app.
 
-- Install: `npm i @zealakit/pattern-input-vue`
+- Install: `npm i @zealakit/pattern-input-vue` and `npm i @zealakit/ui-engine` (`^1.0.0-beta.1` peer)
 - You own the element and the styling; the package ships no CSS, no classes and no validation
   engine.
 
@@ -16,8 +16,22 @@ const price = useNumberInput(() => ({ maximumFractionDigits: 2 }));
 <template><input v-bind="price.getInputProps()" :ref="price.inputRef" /></template>
 ```
 
-Or use the `NumberInput` / `MaskedInput` components with `v-model`. State is read through
-`value()`, `formattedValue()`, `status()`. Never bind `:value`: the DOM binding owns it.
+Or use the `NumberInput` / `MaskedInput` components with `v-model` and direct HTML attrs (`id`,
+`class`, `placeholder`). State is read through `value()`, `formattedValue()`, `status()`. Never
+bind `:value`: the DOM binding owns it.
+
+## Mask pattern syntax & recipes
+
+- Tokens: `9` (digit `[0-9]`), `a` (letter `[A-Za-z]`), `*` (alphanumeric), `\x` (escaped literal),
+  `[...]` (optional section), `{n}` / `{n,m}` / `{n,}` (repeat, capped at 64 slots), custom keys
+  via `tokens: { H: { test: /[0-9A-Fa-f]/, transform: "upper" } }`.
+- Template & selection: `showLiterals: "always" | "filled"`, `placeholderChar` (default `"_"`),
+  `selectMask: (raw, alternatives) => number` for prefix-driven multi-mask formats (e.g. Amex vs Visa/MC).
+- **Phone anti-pattern:** Never stack ambiguous lengths like `["(999) 999-9999", "+9 (999) 999-9999"]`
+  on one input (an extra digit shifts the area code into the country code). Switch a single exact
+  `mask` per selected country instead.
+- Exported types & errors: `MaskTokenDefinition`, `MaskSelector`, `NumberRounding`, `ChangeReason`,
+  `OtpSlotLabel`, `MaskPatternError`, `PatternInputError`.
 
 ## One-time code
 
@@ -50,6 +64,12 @@ behavior attributes belong to the field while `class`, `id` and `data-*` pass th
 
 `v-model` is controlled: the parent decides what to accept. Not updating the model rejects the
 change and the field keeps showing the approved value.
+
+## Styling starter
+
+Style `[role="group"]` with `display: flex; gap: 0.5rem;` and compact slot boxes
+(`width: 2.625rem; height: 3rem; text-align: center;`), plus `input[aria-invalid="true"]` for
+validation errors (`status === "invalid"`).
 
 ## Rules
 

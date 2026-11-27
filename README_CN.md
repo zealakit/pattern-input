@@ -17,14 +17,22 @@ Pattern Input 负责格式化、光标与选区、键盘导航、剪贴板粘贴
 >
 > Pattern Input 不能替代完整的 UI 库或设计系统。当你需要具备无障碍行为的输入框、又不想引入庞大组件库，或现有库的输入框难以重写样式时，适合使用它。
 
+## Which field to use
+
+| 字段 | 适用场景 | 输出类型 | 核心特性 |
+| --- | --- | --- | --- |
+| Number | 价格、数量、小数、百分比 | `number \| null` | 本地化分隔符、步进快捷键、舍入、min/max 限制 |
+| Masked | 税号、电话号码、银行卡号、激活码 | `string`（不含字面量的原始字符） | 多掩码切换、`selectMask`、自定义 token、`showLiterals` |
+| OTP | 双重验证、短信验证码、PIN 码 | `string`（拼接后的完整代码） | 单格焦点与 roving `tabindex`、粘贴分发、表单隐藏输入 |
+
 ## Packages
 
 | Package | Framework/Runtime | Documentation |
 | --- | --- | --- |
-| `@zealakit/pattern-input-vanilla` | Vanilla JS / TS | [README](https://github.com/zealakit/pattern-input/blob/main/packages/vanilla/README.md) |
-| `@zealakit/pattern-input-react` | React 18 / 19 | [README](https://github.com/zealakit/pattern-input/blob/main/packages/react/README.md) |
-| `@zealakit/pattern-input-vue` | Vue 3.5+ | [README](https://github.com/zealakit/pattern-input/blob/main/packages/vue/README.md) |
-| `@zealakit/pattern-input-svelte` | Svelte 5 | [README](https://github.com/zealakit/pattern-input/blob/main/packages/svelte/README.md) |
+| `@zealakit/pattern-input-vanilla` | Vanilla JS / TS | [README](https://github.com/zealakit/pattern-input/blob/main/packages/vanilla/README_CN.md) |
+| `@zealakit/pattern-input-react` | React 18 / 19 | [README](https://github.com/zealakit/pattern-input/blob/main/packages/react/README_CN.md) |
+| `@zealakit/pattern-input-vue` | Vue 3.5+ | [README](https://github.com/zealakit/pattern-input/blob/main/packages/vue/README_CN.md) |
+| `@zealakit/pattern-input-svelte` | Svelte 5 | [README](https://github.com/zealakit/pattern-input/blob/main/packages/svelte/README_CN.md) |
 
 为你的框架安装一个适配器即可。应用本身已提供框架运行时，因此只需添加适配器。每个适配器都打包了 `@zealakit/pattern-input-core`，该包不会发布到 npm；你无需安装或配置 core。
 
@@ -65,14 +73,19 @@ npm i @zealakit/ui-engine   # peer
 
 | Adapter | Number | Masked | OTP |
 | --- | --- | --- | --- |
-| vanilla | 8.3 kB | 7.3 kB | 5.2 kB |
-| react | 8.5 kB | 7.5 kB | 5.4 kB |
-| vue | 8.2 kB | 7.2 kB | 5.2 kB |
-| svelte | 8.1 kB | 7.1 kB | 6.7 kB |
+| vanilla | 8.5 kB | 7.6 kB | 5.6 kB |
+| react | 8.7 kB | 7.8 kB | 5.8 kB |
+| vue | 8.4 kB | 7.5 kB | 5.6 kB |
+| svelte | 8.3 kB | 7.4 kB | 6.9 kB |
 
 ## Examples
 
-[`examples/`](https://github.com/zealakit/pattern-input/tree/main/examples) 目录包含 Vanilla、React、Vue、Svelte 和 Next.js 的可运行集成项目。它们导入已构建的 workspace 包，因此请先构建。
+[`examples/`](https://github.com/zealakit/pattern-input/tree/main/examples) 目录包含 Vanilla、React、Vue、Svelte 和 Next.js 的可运行集成项目，演示了以下场景：
+
+- 支持实时切换 locale 的数字输入（`de-DE` / `en-US` / `vi-VN`）
+- 按国家切换的电话号码掩码（`US`、`VN`、`UK`），避免多余数字导致区号错位
+- 按长度切换的多掩码税号（CPF 11 位 / CNPJ 14 位）与按前缀 `selectMask` 切换的银行卡格式（Visa/MC 与 Amex）
+- 自定义 token 配合 `showLiterals: "always"`、6 格 OTP 表单提交、受控拒绝与失焦校验
 
 ```bash
 pnpm install
