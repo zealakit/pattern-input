@@ -123,6 +123,9 @@ function rewriteManifest(packageRoot, coreManifest) {
   }
 
   manifest.dependencies = dependencies;
+  // A published tarball must not carry workspace-only dev links (the engine link,
+  // the private core); consumers never install devDependencies.
+  delete manifest.devDependencies;
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
