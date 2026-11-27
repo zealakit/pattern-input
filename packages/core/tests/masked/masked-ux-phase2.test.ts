@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createMaskedController } from "../../dist/index.js";
+import {
+  createMaskedController,
+  createMaskedState,
+  getMaskedInputProps,
+  resolveMaskedOptions,
+} from "../../dist/index.js";
 import { caret } from "../../dist/shared/index.js";
 
 const TAX = ["999.999.999-99", "99.999.999/9999-99"];
@@ -60,4 +65,13 @@ test("selectMask out-of-range index falls back safely", () => {
     controller.dispatch({ type: "paste", text: "1234" });
     assert.equal(controller.value, "1234");
   }
+});
+
+test("getMaskedInputProps omits maxlength when showLiterals is always", () => {
+  const opts = { mask: "AA-9999", showLiterals: "always" as const };
+  const props = getMaskedInputProps(
+    createMaskedState(opts),
+    resolveMaskedOptions(opts),
+  );
+  assert.equal(props.maxlength, undefined);
 });

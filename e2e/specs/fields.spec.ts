@@ -121,5 +121,62 @@ for (const example of examples) {
       await invalid.blur();
       await expect(page.getByTestId("invalid-error")).toContainText("invalid");
     });
+
+    test("phone: extra digits never shift the area code; country switch reformats", async ({
+      page,
+    }) => {
+      const phone = page.getByTestId("phone");
+      await phone.click();
+      await phone.pressSequentially("41555501999");
+      await expect(phone).toHaveValue("(415) 555-0199");
+
+      await page.getByTestId("phone-country").selectOption("VN");
+      await expect(phone).toHaveValue("4155 550 199");
+    });
+
+    test("tax: a full CNPJ paste switches to the 14-digit mask", async ({
+      page,
+    }) => {
+      const tax = page.getByTestId("tax");
+      await tax.click();
+      await pasteText(tax, "12.345.678/0001-90");
+      await expect(tax).toHaveValue("12.345.678/0001-90");
+    });
+
+    test("card: selectMask switches between Amex and standard formats", async ({
+      page,
+    }) => {
+      const card = page.getByTestId("card");
+      await card.click();
+      await card.pressSequentially("341234567890123");
+      await expect(card).toHaveValue("3412 345678 90123");
+
+      await card.selectText();
+      await card.press("Backspace");
+      await expect(card).toHaveValue("");
+      await card.pressSequentially("4111111111111111");
+      await expect(card).toHaveValue("4111 1111 1111 1111");
+    });
+
+    test("license: custom tokens upper-case and literals stay visible", async ({
+      page,
+    }) => {
+      const license = page.getByTestId("license");
+      await expect(license).toHaveValue("__-____-__");
+      await license.click();
+      await license.pressSequentially("ab1234ff");
+      await expect(license).toHaveValue("AB-1234-FF");
+    });
+
+    test("OTP boxes are compact and share one row", async ({ page }) => {
+      const first = await page.getByTestId("code-slot-0").boundingBox();
+      const last = await page.getByTestId("code-slot-5").boundingBox();
+      expect(first).not.toBeNull();
+      expect(last).not.toBeNull();
+      if (first && last) {
+        expect(Math.abs(first.y - last.y)).toBeLessThan(4);
+        expect(first.width).toBeLessThanOrEqual(72);
+      }
+    });
   });
 }

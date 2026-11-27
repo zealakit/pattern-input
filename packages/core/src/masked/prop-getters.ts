@@ -8,7 +8,7 @@ export type MaskedInputProps = {
   readonly autocorrect: "off";
   readonly spellcheck: "false";
   readonly autocapitalize: "characters" | "off";
-  readonly maxlength: number;
+  readonly maxlength?: number;
   readonly "aria-invalid"?: "true";
   readonly "aria-describedby"?: string;
   readonly "aria-required"?: "true";
@@ -44,7 +44,9 @@ export function getMaskedInputProps(
       resolved.hasLetterSlots && resolved.allLetterSlotsUpper
         ? "characters"
         : "off",
-    maxlength: resolved.maxFormattedLength,
+    ...(resolved.showLiterals === "filled"
+      ? { maxlength: resolved.maxFormattedLength }
+      : {}),
     ...(state.status === "invalid" || resolved.invalid
       ? { "aria-invalid": "true" }
       : {}),
