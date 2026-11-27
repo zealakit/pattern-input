@@ -653,3 +653,12 @@ test("dom: OTP ignores the trailing input Firefox fires after insertText's compo
     detach();
   }
 });
+
+test("detach removes composition listeners", () => {
+  const element = input();
+  const controller = createMaskedController({ mask: "999" });
+  const detach = attachInput(element, controller);
+  detach();
+  element.dispatchEvent(compositionEvent("compositionstart", ""));
+  assert.equal(controller.getState().composing, null);
+});

@@ -10,6 +10,7 @@ export type {
   MaskedEvent,
   MaskedInputProps,
   MaskedOptions,
+  MaskSelector,
   MaskedState,
   ResolvedMaskedOptions,
 } from "./masked/index.js";

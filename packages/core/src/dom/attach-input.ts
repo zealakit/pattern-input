@@ -273,6 +273,7 @@ export function attachInput<
 
   return () => {
     unsubscribe();
+    composition.destroy();
     for (const listener of listeners) {
       listener.target.removeEventListener(listener.type, listener.handler);
     }

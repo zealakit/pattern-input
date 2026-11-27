@@ -1,5 +1,4 @@
-import { selectAlternative } from "../lexers/index.js";
-import type { CompiledAlternative } from "../lexers/index.js";
+import { fitRaw, type CompiledAlternative } from "../lexers/index.js";
 import {
   caret,
   type FieldStatus,
@@ -8,6 +7,7 @@ import {
 import { formatMasked } from "./format.js";
 import {
   type MaskedOptions,
+  pickAlternative,
   type ResolvedMaskedOptions,
   resolveMaskedOptions,
 } from "./options.js";
@@ -106,9 +106,14 @@ export function buildMaskedState(
 /** Create the initial masked state from already-resolved options. */
 export function createMaskedStateFrom(
   resolved: ResolvedMaskedOptions,
-  initialRaw = "",
+  requestedRaw = "",
 ): MaskedState {
-  const alternativeIndex = selectAlternative(resolved.mask, initialRaw);
+  const fitted = fitRaw(
+    resolved.mask.alternatives[pickAlternative(resolved, requestedRaw)],
+    requestedRaw,
+  ).accepted;
+  const initialRaw = fitted;
+  const alternativeIndex = pickAlternative(resolved, initialRaw);
   const base: MaskedState = {
     kind: "masked",
     rawValue: "",

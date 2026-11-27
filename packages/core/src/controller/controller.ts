@@ -240,6 +240,28 @@ export function createFieldController<
     const nextControlled = isControlled(nextOptions);
     const nextResolved = binding.resolve(nextOptions);
     const wasControlled = controlled;
+    const previousResolved = resolved;
+
+    /** Repaint when changed options (mask, locale, ...) alter the text. */
+    function reformat(): void {
+      if (
+        binding.format(approved, nextResolved).text ===
+        binding.format(approved, previousResolved).text
+      ) {
+        return;
+      }
+      const rebuilt = binding.create(nextResolved, binding.valueOf(approved));
+      approved =
+        (approved as { readonly focused?: boolean }).focused === true
+          ? binding.reduce(
+              rebuilt,
+              { type: "focus" } as unknown as TEvent,
+              nextResolved,
+            )
+          : rebuilt;
+      mergeAnchor = null;
+      notify();
+    }
 
     options = nextOptions;
     resolved = nextResolved;
@@ -258,6 +280,7 @@ export function createFieldController<
       }
       controlled = false;
       pending = null;
+      reformat();
       return;
     }
 
@@ -302,6 +325,10 @@ export function createFieldController<
       pending = null;
       mergeAnchor = null;
       notify();
+      return;
+    }
+    if (!pending) {
+      reformat();
     }
   }
 

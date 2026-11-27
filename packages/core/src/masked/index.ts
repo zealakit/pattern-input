@@ -1,5 +1,13 @@
-export type { MaskedOptions, ResolvedMaskedOptions } from "./options.js";
-export { MaskedOptionsError, resolveMaskedOptions } from "./options.js";
+export type {
+  MaskedOptions,
+  MaskSelector,
+  ResolvedMaskedOptions,
+} from "./options.js";
+export {
+  MaskedOptionsError,
+  pickAlternative,
+  resolveMaskedOptions,
+} from "./options.js";
 export type { FormattedMask, MaskedFormatOptions } from "./format.js";
 export { formatMasked, maxMaskedLength } from "./format.js";
 export type { MaskedParseResult } from "./parse.js";

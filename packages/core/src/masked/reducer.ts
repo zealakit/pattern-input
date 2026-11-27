@@ -4,7 +4,6 @@ import {
   extractRaw,
   fitRaw,
   type MaskToken,
-  selectAlternative,
 } from "../lexers/index.js";
 import {
   caret,
@@ -14,7 +13,7 @@ import {
   selectedRange,
 } from "../shared/index.js";
 import { formatMasked } from "./format.js";
-import type { ResolvedMaskedOptions } from "./options.js";
+import { pickAlternative, type ResolvedMaskedOptions } from "./options.js";
 import { buildMaskedState, type MaskedState, maskedStatusOf } from "./state.js";
 
 export type MaskedEvent = BaseFieldEvent<string>;
@@ -68,7 +67,7 @@ function rebuild(
   resolved: ResolvedMaskedOptions,
   overrides: { invalidReason?: MaskedState["invalidReason"] } = {},
 ): MaskedState {
-  const alternativeIndex = selectAlternative(resolved.mask, raw);
+  const alternativeIndex = pickAlternative(resolved, raw);
   return buildMaskedState(
     raw,
     alternativeIndex,
@@ -112,7 +111,7 @@ function applyInsert(
       // the character, which is how "first match wins" switches as raw grows.
       if (cursor === raw.length) {
         const candidate = `${raw}${char}`;
-        const index = selectAlternative(resolved.mask, candidate);
+        const index = pickAlternative(resolved, candidate);
         const fit = fitRaw(resolved.mask.alternatives[index], candidate);
         if (fit.rejectedAt === undefined && fit.accepted === candidate) {
           raw = candidate;
@@ -192,7 +191,6 @@ function applyPaste(
   text: string,
   resolved: ResolvedMaskedOptions,
 ): MaskedState {
-  const alternative = currentAlternative(state, resolved);
   const extracted = extractRaw(resolved.mask, text.slice(0, MAX_INPUT_CHARS));
   if (extracted === "") {
     return state;
@@ -206,15 +204,18 @@ function applyPaste(
   let accepted = 0;
 
   for (const char of extracted) {
-    const slot = slotAt(alternative, cursor);
-    if (!slot) {
+    const candidate = `${raw.slice(0, cursor)}${char}${raw.slice(cursor)}`;
+    const fit = fitRaw(
+      resolved.mask.alternatives[pickAlternative(resolved, candidate)],
+      candidate,
+    );
+    if (
+      fit.rejectedAt !== undefined ||
+      fit.accepted.length !== candidate.length
+    ) {
       break;
     }
-    const value = acceptChar(slot, char);
-    if (value === null) {
-      break;
-    }
-    raw = `${raw.slice(0, cursor)}${value}${raw.slice(cursor)}`;
+    raw = fit.accepted;
     cursor += 1;
     accepted += 1;
   }
@@ -230,28 +231,15 @@ function applySetValue(
   value: string,
   resolved: ResolvedMaskedOptions,
 ): MaskedState {
-  const alternative = currentAlternative(state, resolved);
   const extracted = extractRaw(resolved.mask, value.slice(0, MAX_INPUT_CHARS));
-  let raw = "";
-  let cursor = 0;
-
-  for (const char of extracted) {
-    const slot = slotAt(alternative, cursor);
-    if (!slot) {
-      break;
-    }
-    const accepted = acceptChar(slot, char);
-    if (accepted === null) {
-      break;
-    }
-    raw += accepted;
-    cursor += 1;
-  }
-
-  const alternativeIndex = selectAlternative(resolved.mask, raw);
+  const fit = fitRaw(
+    resolved.mask.alternatives[pickAlternative(resolved, extracted)],
+    extracted,
+  );
+  const raw = fit.accepted;
   return buildMaskedState(
     raw,
-    alternativeIndex,
+    pickAlternative(resolved, raw),
     resolved,
     caret(raw.length, "before"),
     state,
@@ -418,7 +406,7 @@ export function maskedReducer(
       const raw = state.committedRaw;
       return buildMaskedState(
         raw,
-        selectAlternative(resolved.mask, raw),
+        pickAlternative(resolved, raw),
         resolved,
         caret(raw.length, "before"),
         state,

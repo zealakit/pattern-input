@@ -1,5 +1,5 @@
-import { extractRaw, fitRaw, selectAlternative } from "../lexers/index.js";
-import type { ResolvedMaskedOptions } from "./options.js";
+import { extractRaw, fitRaw } from "../lexers/index.js";
+import { pickAlternative, type ResolvedMaskedOptions } from "./options.js";
 
 export type MaskedParseResult = {
   /** Editable characters only — never literals (FR-5). */
@@ -17,7 +17,7 @@ export function parseMaskedText(
   resolved: ResolvedMaskedOptions,
 ): MaskedParseResult {
   const extracted = extractRaw(resolved.mask, text);
-  const alternativeIndex = selectAlternative(resolved.mask, extracted);
+  const alternativeIndex = pickAlternative(resolved, extracted);
   const alternative = resolved.mask.alternatives[alternativeIndex];
   const fit = fitRaw(alternative, extracted);
 
