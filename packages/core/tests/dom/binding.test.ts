@@ -606,3 +606,50 @@ test("dom: OTP group leaves host-owned inputs past the field length alone", () =
     detach();
   }
 });
+
+test("dom: OTP ignores the trailing input Firefox fires after insertText's composition", () => {
+  const group = document.createElement("div");
+  const slots = Array.from({ length: 6 }, () => {
+    const slot = document.createElement("input");
+    group.append(slot);
+    return slot;
+  });
+  document.body.append(group);
+
+  const controller = createOtpController({ length: 6 });
+  const detach = attachOtpGroup(group, controller, () => slots);
+
+  try {
+    slots[0].focus();
+    // Firefox's keyboard.insertText("987654"): compositionstart/update, then
+    // compositionend (processed once by the guard), then a trailing
+    // "input" event whose inputType is "insertCompositionText" while
+    // isComposing is already false.
+    slots[0].dispatchEvent(compositionEvent("compositionstart", ""));
+    slots[0].dispatchEvent(compositionEvent("compositionupdate", "987654"));
+    slots[0].value = "987654";
+    slots[0].dispatchEvent(compositionEvent("compositionend", "987654"));
+
+    assert.deepEqual(
+      slots.map((slot) => slot.value),
+      ["9", "8", "7", "6", "5", "4"],
+      "the composition end splits the code across the slots",
+    );
+
+    const trailing = new InputEvent("input", {
+      bubbles: true,
+      inputType: "insertCompositionText",
+      data: "987654",
+    });
+    slots[0].dispatchEvent(trailing);
+
+    assert.deepEqual(
+      slots.map((slot) => slot.value),
+      ["9", "8", "7", "6", "5", "4"],
+      "the trailing input event must not insert again",
+    );
+    assert.equal(controller.value, "987654");
+  } finally {
+    detach();
+  }
+});

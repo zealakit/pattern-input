@@ -149,7 +149,10 @@ export function attachInput<
     if (
       guard.applying ||
       composition.composing ||
-      (event as InputEvent).isComposing
+      (event as InputEvent).isComposing ||
+      // Firefox fires input for insertText's composition after compositionend
+      // with isComposing already false; the guard committed it already.
+      composition.justEnded()
     ) {
       return;
     }

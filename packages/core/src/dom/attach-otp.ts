@@ -167,6 +167,9 @@ export function attachOtpGroup(
         guard.applying ||
         composing() ||
         (event as InputEvent).isComposing ||
+        // Firefox fires input for insertText's composition after compositionend
+        // with isComposing already false; the guard committed it already.
+        composition.justEnded() ||
         slot.value === ""
       ) {
         return;
