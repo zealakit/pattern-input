@@ -4,74 +4,111 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pattern Input — vanilla</title>
-    <style>
-      body { font: 15px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 44rem; }
-      label { display: block; margin-top: 1rem; font-weight: 600; }
-      input { font: inherit; padding: 0.35rem 0.5rem; }
-      small { display: block; color: #555; }
-      .error { color: #b00020; }
-      .row { margin-bottom: 1rem; }
-    </style>
   </head>
   <body>
-    <h1>Pattern Input — vanilla</h1>
-
-    <form class="row" onsubmit="event.preventDefault()">
-      <label for="price">Price</label>
-      <input id="price" data-testid="price" />
-      <small>Grouping and two fraction digits. The form makes an implicit Enter
-      submission observable, which is what the IME suite checks.</small>
-    </form>
-
-    <div class="row">
-      <label for="price-de">Price (de-DE)</label>
-      <input id="price-de" data-testid="price-de" />
-      <small>Locale separators: 1.234,56.</small>
-    </div>
-
-    <div class="row">
-      <label for="tax">Tax id</label>
-      <input id="tax" data-testid="tax" />
-      <small>Mask 999.999.999-99.</small>
-    </div>
-
-    <div class="row">
-      <label for="phone">Phone</label>
-      <input id="phone" data-testid="phone" />
-      <small>Alternatives: local or international.</small>
-    </div>
-
-    <form id="form" class="row">
-      <label for="code-0">Verification code</label>
-      <div id="code" data-testid="code" role="group" aria-label="Verification code">
-        <span>
-          <input id="code-0" data-testid="code-slot-0" />
-          <input data-testid="code-slot-1" />
-          <input data-testid="code-slot-2" />
-        </span>
-        <span data-testid="code-sep" aria-hidden="true">-</span>
-        <span>
-          <input data-testid="code-slot-3" />
-          <input data-testid="code-slot-4" />
-          <input data-testid="code-slot-5" />
-        </span>
+    <main class="page">
+      <header class="page-header">
+        <h1>Pattern Input — vanilla</h1>
+        <p>Headless number, mask and OTP fields. Styling lives in this example.</p>
+      </header>
+      <div class="demo-grid">
+      <section class="field-card">
+        <div class="field-header">
+          <label for="price">Price</label>
+          <span class="badge">number</span>
+        </div>
+        <form onsubmit="event.preventDefault()"><input id="price" data-testid="price" placeholder="1,234.56" /></form>
+        <div class="readout" data-readout="price"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">ArrowUp/Down ±1, PageUp/Down ±10, Cmd/Ctrl+Z undo.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="price-de">Localized price</label>
+          <span class="badge">number · locale</span>
+        </div>
+        <div class="row"><input id="price-de" data-testid="price-de" placeholder="1.234,56" /><select id="locale" aria-label="Locale"><option value="de-DE">de-DE</option><option value="en-US">en-US</option><option value="vi-VN">vi-VN</option></select></div>
+        <div class="readout" data-readout="price-de"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">Switching the locale reformats the live value.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="phone">Phone number</label>
+          <span class="badge" id="phone-badge">+1 · (999) 999-9999</span>
+        </div>
+        <div class="row"><select id="phone-country" data-testid="phone-country" aria-label="Phone country"><option value="US">US +1</option><option value="VN">VN +84</option><option value="UK">UK +44</option></select><input id="phone" data-testid="phone" placeholder="(415) 555-0199" /></div>
+        <div class="readout" data-readout="phone"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">One exact mask per country; extra digits are rejected.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="tax">Tax ID</label>
+          <span class="badge" id="tax-badge">CPF (11 digits)</span>
+        </div>
+        <input id="tax" data-testid="tax" placeholder="123.456.789-00" />
+        <div class="actions"><button type="button" class="preset-btn" id="tax-sample">Paste sample CNPJ</button><button type="button" class="preset-btn" id="tax-clear">Clear</button></div>
+        <div class="readout" data-readout="tax"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">The mask switches by length: CPF, then CNPJ.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="card">Payment card</label>
+          <span class="badge" id="card-badge">Standard · 4-4-4-4</span>
+        </div>
+        <input id="card" data-testid="card" placeholder="4111 1111 1111 1111" />
+        <div class="readout" data-readout="card"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">selectMask picks the format from the card prefix.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="license">License key</label>
+          <span class="badge">AA-9999-HH</span>
+        </div>
+        <input id="license" data-testid="license" />
+        <label class="checkbox"><input type="checkbox" id="license-literals" checked /> Always show literals</label>
+        <div class="readout" data-readout="license"><span data-part="raw"></span><span data-part="formatted"></span><span class="status" data-part="status"></span></div>
+        <p class="hint">Custom tokens A (letter) and H (hex), upper-cased.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="code-0">Verification code</label>
+          <span class="badge">otp · 6</span>
+        </div>
+        <form id="form" class="otp-form">
+          <div id="code" class="otp-group" data-testid="code" role="group" aria-label="Verification code">
+            <span class="otp-chunk">
+              <input id="code-0" data-testid="code-slot-0" />
+              <input data-testid="code-slot-1" />
+              <input data-testid="code-slot-2" />
+            </span>
+            <span class="otp-sep" data-testid="code-sep" aria-hidden="true">-</span>
+            <span class="otp-chunk">
+              <input data-testid="code-slot-3" />
+              <input data-testid="code-slot-4" />
+              <input data-testid="code-slot-5" />
+            </span>
+          </div>
+          <div class="actions"><button type="submit" class="preset-btn">Submit</button></div>
+        </form>
+        <p class="hint" data-testid="code-submitted" id="code-submitted">Submitted: —</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="controlled">Controlled price</label>
+          <span class="badge">max 1000</span>
+        </div>
+        <input id="controlled" data-testid="controlled" />
+        <p class="hint" id="controlled-hint">Values above 1000 are rejected.</p>
+      </section>
+      <section class="field-card">
+        <div class="field-header">
+          <label for="invalid">Validation</label>
+          <span class="badge">999-999</span>
+        </div>
+        <input id="invalid" data-testid="invalid" aria-describedby="invalid-error" />
+        <small id="invalid-error" class="error" data-testid="invalid-error"></small>
+      </section>
       </div>
-      <small>Paste a six-digit code into the first slot.</small>
-      <button type="submit">Submit</button>
-    </form>
-
-    <div class="row">
-      <label for="controlled">Controlled price (max 1000)</label>
-      <input id="controlled" data-testid="controlled" />
-      <small>Pastes above 1000 are rejected.</small>
-    </div>
-
-    <div class="row">
-      <label for="invalid">Invalid field</label>
-      <input id="invalid" data-testid="invalid" aria-describedby="invalid-error" />
-      <small id="invalid-error" class="error" data-testid="invalid-error"></small>
-    </div>
-
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
