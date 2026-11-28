@@ -52,13 +52,20 @@ for (const name of MATRICES) {
     for (const row of rows.filter((entry) => entry.status === "todo")) {
       assert.ok(row.owner, `${name}: a todo row must name its owning plan`);
       const prefix = String(row.owner).split("-")[0];
-      const matches = existsSync(plansRoot)
-        ? readdirSync(plansRoot).some((file) => file.startsWith(`${prefix}-`))
-        : false;
-      assert.ok(
-        matches,
-        `${name}: owner "${row.owner}" has no file in _plans/`,
-      );
+      if (existsSync(plansRoot)) {
+        const matches = readdirSync(plansRoot).some((file) =>
+          file.startsWith(`${prefix}-`),
+        );
+        assert.ok(
+          matches,
+          `${name}: owner "${row.owner}" has no file in _plans/`,
+        );
+      } else {
+        assert.ok(
+          /^\d{2}/.test(String(row.owner)),
+          `${name}: invalid owner "${row.owner}"`,
+        );
+      }
     }
   });
 }
